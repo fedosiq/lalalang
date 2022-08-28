@@ -10,9 +10,7 @@ object Show:
 
   def apply[T: Show]: Show[T] = summon
 
-  def instance[T](showFn: T => String): Show[T] =
-    new:
-      override def show_(t: T): String = showFn(t)
+  def instance[T](showFn: T => String): Show[T] = showFn(_)
 
   object instances:
     given Show[ArithmeticFn] = instance {

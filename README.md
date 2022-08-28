@@ -9,13 +9,13 @@ This is a lambda-calculus interpreter
 1. variable:
    ```x, y```
 2. lambda abstraction:
-  ```λx. x + x```
+  ```λx.x + x```
 3. application:
-  ```(λx. x + x) y```
+  ```(λx.x + x) y```
 
 ### Irreducible expressions
 
-- ```Y = λf. (λx. f(x x))(λx. f(x x))```
+- ```Y = λf.(λx.f (x x)) (λx.f (x x))```
 
 ### Some examples
 
