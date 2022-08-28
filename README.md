@@ -12,6 +12,12 @@ This is a lambda-calculus interpreter
   ```λx.x + x```
 3. application:
   ```(λx.x + x) y```
+  
+### Grammar
+
+$$
+M ::= x|λx.M |M \hspace{1mm} N 
+$$
 
 ### Irreducible expressions
 
