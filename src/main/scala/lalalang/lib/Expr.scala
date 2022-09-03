@@ -29,10 +29,8 @@ object Expr:
             Builtin(Comparison(f, subst(a), subst(b)))
 
       case Var(name) =>
-        if (name == target) {
-          println(s"substitute ${target} in ${expr.show} -> ${replacement.show}")
-          replacement
-        } else expr
+        if (name == target) replacement
+        else expr
 
       case Abs(v, body) =>
         if (v == target) expr

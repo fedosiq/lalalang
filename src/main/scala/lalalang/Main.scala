@@ -33,8 +33,16 @@ def reduceExample(expr: Expr): Unit =
       .map(reduceExample)
   )
 
+  println(
+    parser
+      .parse("λf.(λx.f (x x)) λx.f (x x)")
+      .map(reduceExample)
+  )
+
 @main def main: Unit =
   import functions.*
+  import functions.booleans.*
+
   reduceExample(identityApply(1))
   reduceExample(incApply(42))
 
@@ -49,3 +57,5 @@ def reduceExample(expr: Expr): Unit =
 
   reduceExample(andtf)
   reduceExample(andt)
+
+  reduceExample(Expr.App(Y, inc))

@@ -2,8 +2,7 @@ package lalalang
 package lib
 
 trait Show[T]:
-  def show_(t: T): String
-  extension (t: T) def show = show_(t)
+  extension (t: T) def show: String
 
 object Show:
   import Expr.*, ArithmeticFn.*, ComparisonFn.*, BuiltinFn.*
@@ -34,7 +33,7 @@ object Show:
     given Show[Expr] = instance {
       case Var(name)           => name
       case Abs(variable, body) => s"λ$variable.${body.show}"
-      case App(expr, arg)      => s"(${expr.show}) ${arg.show}"
+      case App(expr, arg)      => s"(${expr.show}) (${arg.show})"
       case Lit(x)              => x.toString
       case Builtin(fn)         => fn.show
       // case Cond(pred, trueBranch, falseBranch) => s"if ($pred) then {$trueBranch} else {$falseBranch}"
