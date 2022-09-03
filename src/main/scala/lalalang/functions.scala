@@ -1,35 +1,49 @@
 package lalalang
+package functions
 
 import lib.*
 import lib.Show.instances.given
 
-object functions:
-  import Expr.*, ArithmeticFn.*, BuiltinFn.*
+import Expr.*, ArithmeticFn.*, BuiltinFn.*
 
-  def lit: Int => Expr = Lit(_)
+def lit: Int => Expr = Lit(_)
 
-  def inc: Expr = Abs(
-    variable = "x",
-    body = Builtin(Arithmetic(Add, Var("x"), Lit(1)))
+def inc: Expr = Abs(
+  variable = "x",
+  body = Builtin(Arithmetic(Add, Var("x"), Lit(1)))
+)
+
+def incApply(n: Int): Expr = App(inc, Lit(n))
+
+def identityApply(n: Int): Expr =
+  App(
+    Abs(
+      variable = "x",
+      body = Var("x")
+    ),
+    Lit(n)
   )
 
-  def incApply(n: Int): Expr = App(inc, Lit(n))
+private def lambda2(variables: (String, String), body: Expr) = {
+  val (a, b) = variables
+  Abs(a, Abs(b, body))
+}
 
-  def identityApply(n: Int): Expr =
-    App(
-      Abs(
-        variable = "x",
-        body = Var("x")
-      ),
-      Lit(n)
+def Y = {
+  val xx = App(Var("x"), Var("x"))
+
+  val inner =
+    Abs(
+      variable = "x",
+      body = App(Var("f"), xx)
     )
 
+  Abs("f", App(inner, inner))
+}
+
+object booleans {
   def t = Abs("t", Abs("f", body = Var("t")))
   def f = Abs("t", Abs("f", body = Var("f")))
-
-  private def lambda2(variables: (String, String), body: Expr) =
-    val (a, b) = variables
-    Abs(a, Abs(b, body))
 
   def and =
     lambda2(
@@ -43,3 +57,4 @@ object functions:
 
   def tf  = App(t, f)
   def tft = App(tf, t)
+}

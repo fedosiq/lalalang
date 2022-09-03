@@ -16,7 +16,7 @@ This is a lambda-calculus interpreter
 ### Grammar
 
 $$
-M ::= x|λx.M |M \hspace{1mm} N 
+M ::= x|λx.M |M \hspace{1mm} N
 $$
 
 ### Irreducible expressions
