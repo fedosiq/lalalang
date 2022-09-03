@@ -1,22 +1,32 @@
 package lalalang
 package lib
 
-class ExprSpec extends munit.FunSuite {
+import munit.{ScalaCheckSuite, FunSuite}
+import org.scalacheck.Prop._
+
+class ExprSpec extends FunSuite with ScalaCheckSuite:
   import lalalang.functions.*
+  import lalalang.functions.booleans.*
 
-  test("Literal should eval to literal") {
-    assert(Expr.reduce(lit(42)) == Expr.Lit(42))
+  property("Literal reduces to literal") {
+    forAll { (n: Int) =>
+      Expr.reduce(lit(n)) == Expr.Lit(n)
+    }
   }
 
-  test("Identity application should eval to its argument") {
-    assert(Expr.reduce(identityApply(1)) == Expr.Lit(1))
+  // ∀ n ∈ Z: id(n) = n
+  property("Identity function reduces to its argument") {
+    forAll { (n: Int) =>
+      Expr.reduce(identityApply(n)) == Expr.Lit(n)
+    }
   }
 
-  test("Should eval lambda with arithmetics") {
-    assert(Expr.reduce(incApply(42)) == Expr.Lit(43))
+  property("Increment reduction increments the argument") {
+    forAll { (n: Int) =>
+      Expr.reduce(incApply(n)) == Expr.Lit(n + 1)
+    }
   }
 
   test("T && F should be equal to TFT") {
     assert(Expr.reduce(tft) == Expr.reduce(andtf))
   }
-}
