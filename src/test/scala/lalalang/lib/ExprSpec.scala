@@ -2,7 +2,7 @@ package lalalang
 package lib
 
 import munit.{ScalaCheckSuite, FunSuite}
-import org.scalacheck.Prop._
+import org.scalacheck.Prop.*
 
 class ExprSpec extends FunSuite with ScalaCheckSuite:
   import lalalang.functions.*

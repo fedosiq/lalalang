@@ -24,7 +24,7 @@ class LCParser:
     yield Expr.Abs(name, body)
 
   val nonApp: Parsley[Expr] =
-    parens(parseTerm) <|> abs <|> varName.map(Expr.Var)
+    parens(parseTerm) <|> abs <|> varName.map(Expr.Var(_))
 
   val parseTerm: Parsley[Expr] =
-    chainl1(nonApp, space #> Expr.App)
+    chainl1(nonApp, space #> Expr.App.apply)
