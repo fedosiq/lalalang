@@ -20,13 +20,11 @@ object Expr:
     expr match
       case Lit(_)         => expr
       case App(body, arg) => App(subst(body), subst(arg))
-      case Builtin(fn) =>
-        fn match
-          case Arithmetic(f, a, b) =>
-            Builtin(Arithmetic(f, subst(a), subst(b)))
 
-          case Comparison(f, a, b) =>
-            Builtin(Comparison(f, subst(a), subst(b)))
+      case Builtin(Arithmetic(f, a, b)) =>
+        Builtin(Arithmetic(f, subst(a), subst(b)))
+      case Builtin(Comparison(f, a, b)) =>
+        Builtin(Comparison(f, subst(a), subst(b)))
 
       case Var(name) =>
         if (name == target) replacement
