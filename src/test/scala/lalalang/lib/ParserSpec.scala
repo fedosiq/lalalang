@@ -20,6 +20,14 @@ class ParserSpec extends munit.FunSuite:
     testParser("λf.(λx.f (x x)) λx.f (x x)", Y)
   }
 
+  test("Should treat λ and \\ equally") {
+    val withLambdas = "λf.(λx.f (x x)) λx.f (x x)"
+    val withSlashes = withLambdas.replace('λ', '\\')
+
+    testParser(withLambdas, Y)
+    testParser(withSlashes, Y)
+  }
+
   test("Should parse generated expression") {
     testParser(Y.show, Y)
   }
