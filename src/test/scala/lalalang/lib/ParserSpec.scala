@@ -27,3 +27,35 @@ class ParserSpec extends munit.FunSuite:
   test("Should parse variable") {
     testParser("M", Expr.Var("M"))
   }
+
+  test("Should parse conditional") {
+    testParser(
+      "if ((λx.(x)) a) {T} else {F}",
+      Expr.Cond(
+        Expr.App(
+          Expr.Abs("x", Expr.Var("x")),
+          Expr.Var("a")
+        ),
+        Expr.Var("T"),
+        Expr.Var("F")
+      )
+    )
+  }
+
+  test("Should parse nested conditional") {
+    testParser(
+      "if (if ((λx.(x)) a) {T} else {F}) {T} else {F}",
+      Expr.Cond(
+        Expr.Cond(
+          Expr.App(
+            Expr.Abs("x", Expr.Var("x")),
+            Expr.Var("a")
+          ),
+          Expr.Var("T"),
+          Expr.Var("F")
+        ),
+        Expr.Var("T"),
+        Expr.Var("F")
+      )
+    )
+  }

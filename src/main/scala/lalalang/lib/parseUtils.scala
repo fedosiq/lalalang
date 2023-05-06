@@ -6,7 +6,10 @@ import parsley.character.char
 import parsley.combinator.between
 
 object parseUtils:
-  def parens[T](p: => Parsley[T]): Parsley[T] = between(char('('), char(')'), p)
+  def betweenChars[T](ch1: Char, ch2: Char)(p: => Parsley[T]) = between(char(ch1), char(ch2), p)
+
+  def brackets[T]         = betweenChars[T]('(', ')')
+  def squigglyBrackets[T] = betweenChars[T]('{', '}')
 
   // ((M N) O) P
   // adapted from haskell's parsec

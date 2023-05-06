@@ -1,17 +1,17 @@
 package lalalang.lib
 
 import parsley.{Parsley, Result}
-import parsley.character.{letterOrDigit, char, space}
+import parsley.character.{letterOrDigit, char, space, string}
 import parsley.combinator.manyN
 
 class LCParser:
   import parseUtils.*
 
   def parse(input: String): Result[String, Expr] =
-    parseTerm.parse(input)
+    term.parse(input)
 
   val varName: Parsley[String] =
-    manyN(1, letterOrDigit).map(_.mkString)
+    manyN(1, letterOrDigit).map(_.mkString).filterNot(_ == "if")
 
   val absName: Parsley[String] =
     char('λ') *> varName <* char('.')
@@ -19,11 +19,19 @@ class LCParser:
   val abs: Parsley[Expr.Abs] =
     for
       name <- absName
-      body <- parseTerm
+      body <- term
     yield Expr.Abs(name, body)
 
-  val nonApp: Parsley[Expr] =
-    parens(parseTerm) <|> abs <|> varName.map(Expr.Var(_))
+  // if (...) {...} else {...}
+  val cond: Parsley[Expr.Cond] =
+    for
+      pred        <- string("if ") *> brackets(term) <* space
+      trueBranch  <- squigglyBrackets(term)
+      falseBranch <- string(" else ") *> squigglyBrackets(term)
+    yield Expr.Cond(pred, trueBranch, falseBranch)
 
-  val parseTerm: Parsley[Expr] =
+  val nonApp: Parsley[Expr] =
+    cond <|> brackets(term) <|> abs <|> varName.map(Expr.Var(_))
+
+  val term: Parsley[Expr] =
     chainl1(nonApp, space #> Expr.App.apply)

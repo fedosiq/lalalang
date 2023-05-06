@@ -7,7 +7,7 @@ enum Expr:
   case App(expr: Expr, arg: Expr) // TODO: make expr: Expr.Abs?
   case Lit(x: Int)
   case Builtin(fn: BuiltinFn)
-  // case Cond(pred: Expr, trueBranch: Expr, falseBranch: Expr)
+  case Cond(pred: Expr, trueBranch: Expr, falseBranch: Expr)
 
 object Expr:
   import Expr.*
@@ -29,9 +29,12 @@ object Expr:
         if (name == target) replacement
         else expr
 
-      case Abs(v, body) =>
-        if (v == target) expr
-        else Abs(v, subst(body))
+      case Abs(boundName, body) =>
+        if (boundName == target) expr
+        else Abs(boundName, subst(body))
+
+      case Cond(pred, trueBranch, falseBranch) =>
+        Cond(subst(pred), subst(trueBranch), subst(falseBranch))
 
   def reduce(expr: Expr): Expr =
     expr match
@@ -45,4 +48,8 @@ object Expr:
           case _                  => throw new Exception("Should not happen")
 
       case Builtin(fn) => BuiltinFn.reduce(fn)
-      // case Cond(pred, trueBranch, falseBranch) => ???
+      case Cond(pred, trueBranch, falseBranch) =>
+        reduce(pred) match
+          case Lit(x) if x == 1 => reduce(trueBranch)
+          case Lit(x) if x == 0 => reduce(falseBranch)
+          case _                => throw new Exception("Should not happen")

@@ -30,3 +30,35 @@ class ExprSpec extends FunSuite with ScalaCheckSuite:
   test("T && F should be equal to TFT") {
     assert(Expr.reduce(tft) == Expr.reduce(andtf))
   }
+
+  test("Cond should return reduced true branch for true predicate") {
+    val expr = Expr.Cond(
+      Expr.Builtin(
+        BuiltinFn.Comparison(
+          ComparisonFn.Eq,
+          Expr.Lit(1),
+          Expr.Lit(1)
+        )
+      ),
+      incApply(42),
+      Expr.Lit(0)
+    )
+
+    assert(Expr.reduce(expr) == Expr.Lit(43))
+  }
+
+  test("Cond should return reduced false branch for false predicate") {
+    val expr = Expr.Cond(
+      Expr.Builtin(
+        BuiltinFn.Comparison(
+          ComparisonFn.Eq,
+          Expr.Lit(1),
+          Expr.Lit(0)
+        )
+      ),
+      incApply(42),
+      Expr.Lit(0)
+    )
+
+    assert(Expr.reduce(expr) == Expr.Lit(0))
+  }
