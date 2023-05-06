@@ -2,7 +2,6 @@ package lalalang
 package functions
 
 import lib.*
-import lib.Show.instances.given
 
 import Expr.*, ArithmeticFn.*, BuiltinFn.*
 

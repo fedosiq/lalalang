@@ -1,8 +1,7 @@
 package lalalang.lib
 
 import parsley.{Parsley, Result}
-import Parsley.*
-import parsley.character.{alphaNum, char, space}
+import parsley.character.{letterOrDigit, char, space}
 import parsley.combinator.manyN
 
 class LCParser:
@@ -12,7 +11,7 @@ class LCParser:
     parseTerm.parse(input)
 
   val varName: Parsley[String] =
-    manyN(1, alphaNum).map(_.mkString)
+    manyN(1, letterOrDigit).map(_.mkString)
 
   val absName: Parsley[String] =
     char('λ') *> varName <* char('.')

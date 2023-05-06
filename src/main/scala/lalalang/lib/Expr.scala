@@ -12,7 +12,6 @@ enum Expr:
 object Expr:
   import Expr.*
   import BuiltinFn.*
-  import Show.instances.given
 
   def substitute(target: String, replacement: Expr)(expr: Expr): Expr =
     val subst = substitute(target, replacement)

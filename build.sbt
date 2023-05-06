@@ -1,4 +1,4 @@
-val scala3Version = "3.2.0"
+val scala3Version = "3.3.0-RC5"
 
 lazy val root = project
   .in(file("."))
@@ -8,23 +8,24 @@ lazy val root = project
     version         := "0.1.0-SNAPSHOT",
     scalaVersion    := scala3Version,
     scalacOptions ++= Seq(
+      "-language:postfixOps",
+      "-language:implicitConversions",
       "-feature",
       "-deprecation",
       "-unchecked",
-      "-language:postfixOps",
-      "-language:implicitConversions",
-      "-Xfatal-warnings",
-      // "-Yexplicit-nulls",
-      "-Ykind-projector",
-      // "-Ysafe-init",
-      "-rewrite",
+      // "-rewrite",
       "-source",
       "future-migration",
-      "-Vprofile"
+      "-Vprofile",
+      "-Xfatal-warnings",
+      "-Wunused:all",
+      // "-Yexplicit-nulls",
+      // "-Ysafe-init",
+      "-Ykind-projector"
     ),
     libraryDependencies ++= Seq(
-      "com.github.j-mie6" %% "parsley"          % "3.3.10",
-      "org.scalameta"     %% "munit"            % "1.0.0-M6" % Test,
-      "org.scalameta"     %% "munit-scalacheck" % "1.0.0-M6" % Test
+      "com.github.j-mie6" %% "parsley"          % "4.2.9",
+      "org.scalameta"     %% "munit"            % "1.0.0-M7" % Test,
+      "org.scalameta"     %% "munit-scalacheck" % "1.0.0-M7" % Test
     )
   )

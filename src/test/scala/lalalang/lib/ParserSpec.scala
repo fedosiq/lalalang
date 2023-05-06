@@ -2,7 +2,6 @@ package lalalang
 package lib
 
 import Show.instances.given
-import parsley.Result
 
 class ParserSpec extends munit.FunSuite:
   import lalalang.functions.*
