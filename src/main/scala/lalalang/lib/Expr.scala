@@ -42,7 +42,7 @@ object Expr:
       case App(appBody, arg) =>
         reduce(appBody) match
           case Abs(v, lambdaBody) => reduce(substitute(v, arg)(lambdaBody))
-          case _                  => ???
+          case _                  => throw new Exception("Should not happen")
 
       case Builtin(fn) => BuiltinFn.reduce(fn)
       // case Cond(pred, trueBranch, falseBranch) => ???
