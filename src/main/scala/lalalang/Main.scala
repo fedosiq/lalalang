@@ -15,31 +15,16 @@ def reduceExample(expr: Expr): Unit =
   println(parser.parse("λa.λb.a"))
   println(parser.parse("(λa.λb.a) 2 4"))
 
-  println(
-    parser
-      .parse("(λa.λb.a) 2 4")
-      .map(reduceExample)
+  val examples = List(
+    "(λa.λb.a) 2 4",
+    "((λt.λf.t) λt.λf.f) λt.λf.t",
+    "((λp.λq.((p) q) p) λt.λf.t) λt.λf.f",
+    "λf.(λx.f (x x)) λx.f (x x)"
   )
 
-  println(
-    parser
-      .parse("((λt.λf.t) λt.λf.f) λt.λf.t")
-      .map(reduceExample)
-  )
+  examples.foreach(parser.parse(_).map(reduceExample))
 
-  println(
-    parser
-      .parse("((λp.λq.((p) q) p) λt.λf.t) λt.λf.f")
-      .map(reduceExample)
-  )
-
-  println(
-    parser
-      .parse("λf.(λx.f (x x)) λx.f (x x)")
-      .map(reduceExample)
-  )
-
-@main def main: Unit =
+@main def reduceTest: Unit =
   import functions.*
   import functions.booleans.*
 
@@ -58,4 +43,6 @@ def reduceExample(expr: Expr): Unit =
   reduceExample(andtf)
   reduceExample(andt)
 
-  reduceExample(Expr.App(Y, inc))
+  // reduceExample(Expr.App(Y, inc))
+
+  reduceExample(fib(10))

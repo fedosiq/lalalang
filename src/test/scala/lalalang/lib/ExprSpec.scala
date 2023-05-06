@@ -62,3 +62,12 @@ class ExprSpec extends FunSuite with ScalaCheckSuite:
 
     assert(Expr.reduce(expr) == Expr.Lit(0))
   }
+
+  test("Should calculate fibonacci") {
+    assert(Expr.reduce(fib(1)) == Expr.Lit(1))
+    assert(Expr.reduce(fib(2)) == Expr.Lit(2))
+    assert(Expr.reduce(fib(3)) == Expr.Lit(3))
+    assert(Expr.reduce(fib(4)) == Expr.Lit(5))
+    assert(Expr.reduce(fib(5)) == Expr.Lit(8))
+    assert(Expr.reduce(fib(10)) == Expr.Lit(89))
+  }

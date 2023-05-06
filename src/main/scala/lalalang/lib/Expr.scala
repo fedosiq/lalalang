@@ -47,7 +47,9 @@ object Expr:
           case Abs(v, lambdaBody) => reduce(substitute(v, arg)(lambdaBody))
           case _                  => throw new Exception("Should not happen")
 
-      case Builtin(fn) => BuiltinFn.reduce(fn)
+      case Builtin(Arithmetic(op, a, b)) => op.apply(reduce(a), reduce(b))
+      case Builtin(Comparison(op, a, b)) => op.apply(reduce(a), reduce(b))
+
       case Cond(pred, trueBranch, falseBranch) =>
         reduce(pred) match
           case Lit(x) if x == 1 => reduce(trueBranch)

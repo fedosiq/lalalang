@@ -28,6 +28,7 @@ private def lambda2(variables: (String, String), body: Expr) = {
   Abs(a, Abs(b, body))
 }
 
+// lazy fixpoint
 def Y = {
   val xx = App(Var("x"), Var("x"))
 
@@ -38,6 +39,37 @@ def Y = {
     )
 
   Abs("f", App(inner, inner))
+}
+
+val fibStep = {
+  def xMinus(n: Int) = Builtin(
+    Arithmetic(ArithmeticFn.Sub, Var("x"), Lit(n))
+  )
+
+  val falseBranch = Builtin(
+    Arithmetic(
+      ArithmeticFn.Add,
+      App(Var("f"), xMinus(1)),
+      App(Var("f"), xMinus(2))
+    )
+  )
+
+  Abs(
+    "f",
+    Abs(
+      "x",
+      Cond(
+        Builtin(Comparison(ComparisonFn.Lt, Var("x"), Lit(2))),
+        Lit(1),
+        falseBranch
+      )
+    )
+  )
+}
+
+def fib(n: Int) = {
+  val fn = App(Y, fibStep)
+  App(fn, Lit(n))
 }
 
 object booleans {

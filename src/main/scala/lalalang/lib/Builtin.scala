@@ -35,9 +35,3 @@ enum ComparisonFn:
 enum BuiltinFn:
   case Arithmetic(fn: ArithmeticFn, a: Expr, b: Expr)
   case Comparison(fn: ComparisonFn, a: Expr, b: Expr)
-
-object BuiltinFn:
-  def reduce(fn: BuiltinFn): Expr.Lit =
-    fn match
-      case Arithmetic(fn, a, b) => fn.apply(a, b)
-      case Comparison(fn, a, b) => fn.apply(a, b)
