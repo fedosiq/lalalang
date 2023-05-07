@@ -4,7 +4,7 @@ package lib
 enum Expr:
   case Var(name: String)
   case Abs(variable: String, body: Expr)
-  case App(expr: Expr, arg: Expr) // TODO: make expr: Expr.Abs?
+  case App(expr: Expr, arg: Expr)
   case Lit(x: Int)
   case Builtin(fn: BuiltinFn)
   case Cond(pred: Expr, trueBranch: Expr, falseBranch: Expr)
@@ -42,7 +42,7 @@ object Expr:
       case abs: Abs => abs
       case lit: Lit => lit
 
-      case App(appBody, arg) =>
+      case App(appBody, arg) => // do not eval arg here to get lazy evaluation
         reduce(appBody) match
           case Abs(v, lambdaBody) => reduce(substitute(v, arg)(lambdaBody))
           case _                  => throw new Exception("Should not happen")

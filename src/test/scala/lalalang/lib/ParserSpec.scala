@@ -16,6 +16,16 @@ class ParserSpec extends munit.FunSuite:
         assertEquals(_, expected)
       )
 
+  test("Variable should not start with a digit") {
+    val parseResult = parser.parse("λ1f.1f")
+
+    parseResult
+      .fold(
+        _ => assert(true),
+        _ => fail("shouldn't have parsed")
+      )
+  }
+
   test("Should parse exprsession correctly") {
     testParser("λf.(λx.f (x x)) λx.f (x x)", Y)
   }

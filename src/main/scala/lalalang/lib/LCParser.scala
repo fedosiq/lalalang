@@ -1,7 +1,7 @@
 package lalalang.lib
 
 import parsley.{Parsley, Result}
-import parsley.character.{letterOrDigit, char, space, string, oneOf}
+import parsley.character.{letterOrDigit, char, space, string, oneOf, letter}
 import parsley.combinator.manyN
 
 class LCParser:
@@ -10,8 +10,14 @@ class LCParser:
   def parse(input: String): Result[String, Expr] =
     term.parse(input)
 
+  // starts with a letter
+  // may also contain digits
   val varName: Parsley[String] =
-    manyN(1, letterOrDigit).map(_.mkString).filterNot(_ == "if")
+    letter
+      .flatMap { head =>
+        manyN(0, letterOrDigit).map(tail => (head :: tail).mkString)
+      }
+      .filterNot(_ == "if")
 
   val absName: Parsley[String] =
     oneOf('λ', '\\') *> varName <* char('.')

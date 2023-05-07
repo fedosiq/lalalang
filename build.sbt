@@ -16,7 +16,7 @@ lazy val root = project
       // "-rewrite",
       "-source",
       "future-migration",
-      "-Vprofile",
+      // "-Vprofile",
       "-Xfatal-warnings",
       "-Wunused:all",
       // "-Yexplicit-nulls",
