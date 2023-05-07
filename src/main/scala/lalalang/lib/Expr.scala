@@ -45,7 +45,7 @@ object Expr:
       case App(appBody, arg) => // do not eval arg here to get lazy evaluation
         reduce(appBody) match
           case Abs(v, lambdaBody) => reduce(substitute(v, arg)(lambdaBody))
-          case _                  => throw new Exception("Should not happen")
+          case other              => throw new Exception(s"Expected lambda abstraction, got $other")
 
       case Builtin(Arithmetic(op, a, b)) => op.apply(reduce(a), reduce(b))
       case Builtin(Comparison(op, a, b)) => op.apply(reduce(a), reduce(b))
@@ -54,4 +54,4 @@ object Expr:
         reduce(pred) match
           case Lit(x) if x == 1 => reduce(trueBranch)
           case Lit(x) if x == 0 => reduce(falseBranch)
-          case _                => throw new Exception("Should not happen")
+          case other            => throw new Exception(s"Expected literal integer, got $other")
