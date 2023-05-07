@@ -2,7 +2,7 @@ package lalalang.lib
 
 import parsley.{Parsley, Result}
 import parsley.character.{letterOrDigit, char, space, string, oneOf, letter}
-import parsley.combinator.manyN
+import parsley.combinator.many
 
 class LCParser:
   import parseUtils.*
@@ -15,7 +15,7 @@ class LCParser:
   val varName: Parsley[String] =
     letter
       .flatMap { head =>
-        manyN(0, letterOrDigit).map(tail => (head :: tail).mkString)
+        many(letterOrDigit).map(tail => (head :: tail).mkString)
       }
       .filterNot(_ == "if")
 
