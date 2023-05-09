@@ -2,6 +2,7 @@ package lalalang
 package lib
 
 import Show.instances.given
+import lalalang.functions.booleans.andtf
 
 class ParserSpec extends munit.FunSuite:
   import lalalang.functions.*
@@ -26,8 +27,38 @@ class ParserSpec extends munit.FunSuite:
       )
   }
 
-  test("Should parse exprsession correctly") {
+  test("Should parse abstraction correctly") {
     testParser("λf.(λx.f (x x)) λx.f (x x)", Y)
+  }
+
+  test("Should parse application correctly with different parenthesis") {
+    val repr = Expr.App(
+      Expr.App(
+        Expr.Abs(
+          "a",
+          Expr.Abs(
+            "b",
+            Expr.Var("a")
+          )
+        ),
+        Expr.Lit(2)
+      ),
+      Expr.Lit(4)
+    )
+
+    val validExpressions = List(
+      "((λa.λb.a) (2)) (4)",
+      "(λa.λb.a) 2 4",
+      "(λa.λb.a) (2) (4)",
+      "(λa.λb.(a)) 2 4"
+    )
+
+    validExpressions.foreach(testParser(_, repr))
+
+    // testParser("((λa.λb.a) (2)) (4)", correct)
+    // testParser("(λa.λb.a) 2 4", correct)
+    // testParser("(λa.λb.a) (2) (4)", correct)
+    // testParser("(λa.λb.(a)) 2 4", correct)
   }
 
   test("Should treat λ and \\ equally") {
@@ -38,8 +69,12 @@ class ParserSpec extends munit.FunSuite:
     testParser(withSlashes, Y)
   }
 
-  test("Should parse generated expression") {
+  test("Should parse generated expression 1") {
     testParser(Y.show, Y)
+  }
+
+  test("Should parse generated expression 2") {
+    testParser(andtf.show, andtf)
   }
 
   test("Should parse variable") {

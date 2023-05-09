@@ -1,7 +1,7 @@
 package lalalang.lib
 
 import parsley.{Parsley, Result}
-import parsley.character.{letterOrDigit, char, space, string, oneOf, letter}
+import parsley.character.{letterOrDigit, char, space, string, oneOf, letter, digit}
 import parsley.combinator.many
 
 class LCParser:
@@ -9,6 +9,11 @@ class LCParser:
 
   def parse(input: String): Result[String, Expr] =
     term.parse(input)
+
+  val literal: Parsley[Expr] =
+    many(digit).map { numberChars =>
+      Expr.Lit(numberChars.mkString.toInt)
+    }
 
   // starts with a letter
   // may also contain digits
@@ -37,7 +42,7 @@ class LCParser:
     yield Expr.Cond(pred, trueBranch, falseBranch)
 
   val nonApp: Parsley[Expr] =
-    cond <|> brackets(term) <|> abs <|> varName.map(Expr.Var(_))
+    cond <|> brackets(term) <|> abs <|> varName.map(Expr.Var(_)) <|> literal
 
   val term: Parsley[Expr] =
     chainl1(nonApp, space #> Expr.App.apply)
