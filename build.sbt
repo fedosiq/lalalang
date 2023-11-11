@@ -1,4 +1,4 @@
-val scala3Version = "3.3.0-RC5"
+val scala3Version = "3.3.1"
 
 lazy val root = project
   .in(file("."))
@@ -19,6 +19,7 @@ lazy val root = project
       // "-Vprofile",
       "-Xfatal-warnings",
       "-Wunused:all",
+      "-Wvalue-discard",
       // "-Yexplicit-nulls",
       // "-Ysafe-init",
       "-Ykind-projector"

@@ -14,7 +14,6 @@ object parseUtils:
   // ((M N) O) P
   // adapted from haskell's parsec
   def chainl1[A](p: Parsley[A], op: Parsley[(A, A) => A]): Parsley[A] =
-    // TODO: replace with foldLeftM?
     def rest(x: A): Parsley[A] =
       val doParse =
         for

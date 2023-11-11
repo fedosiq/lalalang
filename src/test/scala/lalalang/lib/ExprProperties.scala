@@ -9,19 +9,19 @@ class ExprProperties extends FunSuite with ScalaCheckSuite:
 
   property("Literal reduces to literal") {
     forAll { (n: Int) =>
-      Expr.reduce(lit(n)) == Expr.Lit(n)
+      Expr.eval(lit(n)) == Expr.Lit(n)
     }
   }
 
   // ∀ n ∈ Z: id(n) = n
-  property("Identity function reduces to its argument") {
+  property("Identity function evals to its argument") {
     forAll { (n: Int) =>
-      Expr.reduce(identityApply(n)) == Expr.Lit(n)
+      Expr.eval(identityApply(n)) == Expr.Lit(n)
     }
   }
 
   property("Increment reduction increments the argument") {
     forAll { (n: Int) =>
-      Expr.reduce(incApply(n)) == Expr.Lit(n + 1)
+      Expr.eval(incApply(n)) == Expr.Lit(n + 1)
     }
   }

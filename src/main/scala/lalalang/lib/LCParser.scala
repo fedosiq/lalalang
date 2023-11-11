@@ -22,7 +22,7 @@ class LCParser:
       .flatMap { head =>
         many(letterOrDigit).map(tail => (head :: tail).mkString)
       }
-      .filterNot(_ == "if")
+      .filterNot(LCParser.reservedKeywords.contains)
 
   val absName: Parsley[String] =
     oneOf('λ', '\\') *> varName <* char('.')
@@ -46,3 +46,6 @@ class LCParser:
 
   val term: Parsley[Expr] =
     chainl1(nonApp, space #> Expr.App.apply)
+
+object LCParser:
+  private val reservedKeywords = Set("if", "else", "λ")

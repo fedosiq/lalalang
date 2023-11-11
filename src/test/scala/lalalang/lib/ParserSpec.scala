@@ -32,7 +32,7 @@ class ParserSpec extends munit.FunSuite:
   }
 
   test("Should parse application correctly with different parenthesis") {
-    val repr = Expr.App(
+    val expected = Expr.App(
       Expr.App(
         Expr.Abs(
           "a",
@@ -53,12 +53,7 @@ class ParserSpec extends munit.FunSuite:
       "(λa.λb.(a)) 2 4"
     )
 
-    validExpressions.foreach(testParser(_, repr))
-
-    // testParser("((λa.λb.a) (2)) (4)", correct)
-    // testParser("(λa.λb.a) 2 4", correct)
-    // testParser("(λa.λb.a) (2) (4)", correct)
-    // testParser("(λa.λb.(a)) 2 4", correct)
+    validExpressions.foreach(testParser(_, expected))
   }
 
   test("Should treat λ and \\ equally") {

@@ -36,22 +36,22 @@ object Expr:
       case Cond(pred, trueBranch, falseBranch) =>
         Cond(subst(pred), subst(trueBranch), subst(falseBranch))
 
-  def reduce(expr: Expr): Expr =
+  def eval(expr: Expr): Expr =
     expr match
       case v: Var   => v
       case abs: Abs => abs
       case lit: Lit => lit
 
       case App(appBody, arg) => // do not eval arg here to get lazy evaluation
-        reduce(appBody) match
-          case Abs(v, lambdaBody) => reduce(substitute(v, arg)(lambdaBody))
+        eval(appBody) match
+          case Abs(v, lambdaBody) => eval(substitute(v, arg)(lambdaBody))
           case other              => throw new Exception(s"Expected lambda abstraction, got $other")
 
-      case Builtin(Arithmetic(op, a, b)) => op.apply(reduce(a), reduce(b))
-      case Builtin(Comparison(op, a, b)) => op.apply(reduce(a), reduce(b))
+      case Builtin(Arithmetic(op, a, b)) => op.apply(eval(a), eval(b))
+      case Builtin(Comparison(op, a, b)) => op.apply(eval(a), eval(b))
 
       case Cond(pred, trueBranch, falseBranch) =>
-        reduce(pred) match
-          case Lit(x) if x == 1 => reduce(trueBranch)
-          case Lit(x) if x == 0 => reduce(falseBranch)
+        eval(pred) match
+          case Lit(x) if x == 1 => eval(trueBranch)
+          case Lit(x) if x == 0 => eval(falseBranch)
           case other            => throw new Exception(s"Expected literal integer, got $other")
