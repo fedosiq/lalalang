@@ -8,7 +8,7 @@ class ExprSpec extends FunSuite with ScalaCheckSuite:
   import lalalang.functions.booleans.*
 
   test("T && F should be equal to TFT") {
-    assert(Expr.eval(tft) == Expr.eval(andtf))
+    assert(Expr.substitutionEval(tft) == Expr.substitutionEval(andtf))
   }
 
   test("Cond should return reduced true branch for true predicate") {
@@ -24,7 +24,7 @@ class ExprSpec extends FunSuite with ScalaCheckSuite:
       Expr.Lit(0)
     )
 
-    assert(Expr.eval(expr) == Expr.Lit(43))
+    assert(Expr.substitutionEval(expr) == Expr.Lit(43))
   }
 
   test("Cond should return reduced false branch for false predicate") {
@@ -40,14 +40,13 @@ class ExprSpec extends FunSuite with ScalaCheckSuite:
       Expr.Lit(0)
     )
 
-    assert(Expr.eval(expr) == Expr.Lit(0))
+    assert(Expr.substitutionEval(expr) == Expr.Lit(0))
   }
 
   test("Should calculate fibonacci") {
-    assert(Expr.eval(fib(1)) == Expr.Lit(1))
-    assert(Expr.eval(fib(2)) == Expr.Lit(2))
-    assert(Expr.eval(fib(3)) == Expr.Lit(3))
-    assert(Expr.eval(fib(4)) == Expr.Lit(5))
-    assert(Expr.eval(fib(5)) == Expr.Lit(8))
-    assert(Expr.eval(fib(10)) == Expr.Lit(89))
+    val testCases = Map(1 -> 1, 1 -> 1, 2 -> 2, 3 -> 3, 4 -> 5, 5 -> 8, 10 -> 89)
+    testCases
+      .foreach { (in, expected) =>
+        assert(Expr.substitutionEval(fib(in, _lazy = true)) == Expr.Lit(expected))
+      }
   }

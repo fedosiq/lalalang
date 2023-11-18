@@ -1,8 +1,9 @@
 package lalalang.lib
 
-import parsley.{Parsley, Result}
-import parsley.character.{letterOrDigit, char, space, string, oneOf, letter, digit}
+import lalalang.lib.model.VarName
+import parsley.character.{char, digit, letter, letterOrDigit, oneOf, space, string}
 import parsley.combinator.many
+import parsley.{Parsley, Result}
 
 class LCParser:
   import parseUtils.*
@@ -17,14 +18,14 @@ class LCParser:
 
   // starts with a letter
   // may also contain digits
-  val varName: Parsley[String] =
+  val varName: Parsley[VarName] =
     letter
       .flatMap { head =>
         many(letterOrDigit).map(tail => (head :: tail).mkString)
       }
       .filterNot(LCParser.reservedKeywords.contains)
 
-  val absName: Parsley[String] =
+  val absName: Parsley[VarName] =
     oneOf('λ', '\\') *> varName <* char('.')
 
   val abs: Parsley[Expr.Abs] =

@@ -1,13 +1,30 @@
 package lalalang
 
-import lib.*
-import lib.Show.instances.given
+import lalalang.lib.Show.instances.given
+import lalalang.lib.*
+
+def timed[A](a: => A): (A, Long) = {
+  val start = System.currentTimeMillis
+  val res   = a
+  val time  = System.currentTimeMillis - start
+  res -> time
+}
 
 def reduceExample(expr: Expr): Unit =
-  println(s"inner repr: ${tree(expr, 0)}")
-  val res = Expr.eval(expr)
-  println(s"inner repr of result: ${tree(res, 0)}")
+  println("inner repr:")
+  pprint.pprintln(expr)
+
+  val (res, time1)        = timed(Expr.substitutionEval(expr))
+  val (envEvalRes, time2) = timed(Expr.envEval(Map.empty)(expr))
+
+  println(s"[${time1}ms] inner repr of substitution result:")
+  pprint.pprintln(res)
+
   println(s"${expr.show} ~> ${res.show}")
+  println("-" * 50 + "\n")
+
+  println(s"[${time2}ms] inner repr of env result:")
+  pprint.log(envEvalRes)
   println("-" * 50 + "\n")
 
 def tree(expr: Expr, indent: Int): String =
@@ -59,6 +76,8 @@ def tree(expr: Expr, indent: Int): String =
   reduceExample(andtf)
   reduceExample(andt)
 
-  // reduceExample(Expr.App(Y, inc))
+  // reduceExample(Expr.App(eagerFixpoint, inc))
 
-  reduceExample(fib(10))
+  pprint.pprintln(fib(0, false))
+  reduceExample(fib(0, false))
+  reduceExample(fib(10, false))

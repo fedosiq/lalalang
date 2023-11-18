@@ -3,10 +3,12 @@ val scala3Version = "3.3.1"
 lazy val root = project
   .in(file("."))
   .settings(
-    coverageEnabled := true,
-    name            := "lalalang",
-    version         := "0.1.0-SNAPSHOT",
-    scalaVersion    := scala3Version,
+    coverageEnabled   := true,
+    name              := "lalalang",
+    version           := "0.1.0-SNAPSHOT",
+    scalaVersion      := scala3Version,
+    semanticdbEnabled := true,
+    semanticdbVersion := scalafixSemanticdb.revision,
     scalacOptions ++= Seq(
       "-language:postfixOps",
       "-language:implicitConversions",
@@ -26,7 +28,8 @@ lazy val root = project
     ),
     libraryDependencies ++= Seq(
       "com.github.j-mie6" %% "parsley"          % "4.2.9",
-      "org.scalameta"     %% "munit"            % "1.0.0-M7" % Test,
-      "org.scalameta"     %% "munit-scalacheck" % "1.0.0-M7" % Test
+      "com.lihaoyi"       %% "pprint"           % "0.8.1",
+      "org.scalameta"     %% "munit"            % "1.0.0-M10" % Test,
+      "org.scalameta"     %% "munit-scalacheck" % "1.0.0-M10" % Test
     )
   )

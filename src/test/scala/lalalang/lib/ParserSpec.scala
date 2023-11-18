@@ -28,7 +28,7 @@ class ParserSpec extends munit.FunSuite:
   }
 
   test("Should parse abstraction correctly") {
-    testParser("λf.(λx.f (x x)) λx.f (x x)", Y)
+    testParser("λf.(λx.f (x x)) λx.f (x x)", lazyFixpoint)
   }
 
   test("Should parse application correctly with different parenthesis") {
@@ -60,12 +60,12 @@ class ParserSpec extends munit.FunSuite:
     val withLambdas = "λf.(λx.f (x x)) λx.f (x x)"
     val withSlashes = withLambdas.replace('λ', '\\')
 
-    testParser(withLambdas, Y)
-    testParser(withSlashes, Y)
+    testParser(withLambdas, lazyFixpoint)
+    testParser(withSlashes, lazyFixpoint)
   }
 
   test("Should parse generated expression 1") {
-    testParser(Y.show, Y)
+    testParser(lazyFixpoint.show, lazyFixpoint)
   }
 
   test("Should parse generated expression 2") {

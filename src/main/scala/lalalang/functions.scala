@@ -1,9 +1,10 @@
 package lalalang
 package functions
 
-import lib.*
-
-import Expr.*, ArithmeticFn.*, BuiltinFn.*
+import lalalang.lib.ArithmeticFn.*
+import lalalang.lib.BuiltinFn.*
+import lalalang.lib.Expr.*
+import lalalang.lib.*
 
 def lit: Int => Expr = Lit(_)
 
@@ -28,14 +29,27 @@ private def lambda2(variables: (String, String), body: Expr) = {
   Abs(a, Abs(b, body))
 }
 
-// lazy fixpoint
-def Y = {
+// will recurse forever in case of eager arg evaluation
+def lazyFixpoint = {
   val xx = App(Var("x"), Var("x"))
 
   val inner =
     Abs(
       variable = "x",
       body = App(Var("f"), xx)
+    )
+
+  Abs("f", App(inner, inner))
+}
+
+def eagerFixpoint = {
+  val xx          = App(Var("x"), Var("x"))
+  val indirection = Abs("v", App(xx, Var("v")))
+
+  val inner =
+    Abs(
+      variable = "x",
+      body = App(Var("f"), indirection)
     )
 
   Abs("f", App(inner, inner))
@@ -67,8 +81,8 @@ val fibStep = {
   )
 }
 
-def fib(n: Int) = {
-  val fn = App(Y, fibStep)
+def fib(n: Int, _lazy: Boolean) = {
+  val fn = App(if (_lazy) lazyFixpoint else eagerFixpoint, fibStep)
   App(fn, Lit(n))
 }
 
