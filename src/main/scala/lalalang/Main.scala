@@ -2,6 +2,7 @@ package lalalang
 
 import lalalang.lib.Show.instances.given
 import lalalang.lib.*
+import lalalang.lib.util.|>
 
 def timed[A](a: => A): (A, Long) = {
   val start = System.currentTimeMillis
@@ -27,7 +28,8 @@ def reduceExample(expr: Expr): Unit =
   pprint.log(envEvalRes)
   println("-" * 50 + "\n")
 
-def tree(expr: Expr, indent: Int): String =
+/*
+def  tree(expr: Expr, indent: Int): String =
   val spaces = "\n" + " " * indent
   expr match
     case v: Expr.Var => spaces + v.toString
@@ -42,6 +44,7 @@ def tree(expr: Expr, indent: Int): String =
 
     case Expr.Cond(pred, trueBranch, falseBranch) =>
       spaces + s"Cond(${tree(pred, indent + 2)},${tree(trueBranch, indent + 2)},${tree(falseBranch, indent + 2)}"
+ */
 
 @main def parseTest: Unit =
   val parser = LCParser()
@@ -81,3 +84,5 @@ def tree(expr: Expr, indent: Int): String =
   pprint.pprintln(fib(0, false))
   reduceExample(fib(0, false))
   reduceExample(fib(10, false))
+  Expr.envEval(Map.empty)(fibDirect(10)) |> println
+  fibDirect(10).show |> println

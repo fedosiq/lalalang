@@ -86,6 +86,34 @@ def fib(n: Int, _lazy: Boolean) = {
   App(fn, Lit(n))
 }
 
+def fibDirect(n: Int) = {
+  def xMinus(n: Int) = Builtin(
+    Arithmetic(ArithmeticFn.Sub, Var("x"), Lit(n))
+  )
+
+  val falseBranch = Builtin(
+    Arithmetic(
+      ArithmeticFn.Add,
+      App(Var("fib"), xMinus(1)),
+      App(Var("fib"), xMinus(2))
+    )
+  )
+  // let rec fib = \x -> if (x < 2) 1 else fib (x - 1) + fib (x - 2)
+  Bind(
+    recursive = true,
+    name = "fib",
+    bindingBody = Abs(
+      variable = "x",
+      body = Cond(
+        pred = Builtin(Comparison(ComparisonFn.Lt, Var("x"), Lit(2))),
+        trueBranch = Lit(1),
+        falseBranch = falseBranch
+      )
+    ),
+    expr = App(Var("fib"), lit(n))
+  )
+}
+
 object booleans {
   def t = Abs("t", Abs("f", body = Var("t")))
   def f = Abs("t", Abs("f", body = Var("f")))

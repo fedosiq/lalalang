@@ -10,7 +10,8 @@ type Env     = Map[VarName, Value]
 
 enum Value:
   case Number(num: Int)
-  case Closure(env: Env, varName: VarName, body: Expr)
+  case Closure(var env: Env, varName: VarName, body: Expr)
+  case BlackHole
 
 object Value:
   def asInt: Value => Int =
@@ -28,6 +29,7 @@ enum Expr:
   case Lit(x: Int)
   case Builtin(fn: BuiltinFn)
   case Cond(pred: Expr, trueBranch: Expr, falseBranch: Expr)
+  case Bind(recursive: Boolean, name: VarName, bindingBody: Expr, expr: Expr)
 
 object Expr:
   import Expr.*
@@ -61,6 +63,8 @@ object Expr:
       case Cond(pred, trueBranch, falseBranch) =>
         Cond(subst(pred), subst(trueBranch), subst(falseBranch))
 
+      case _: Bind => throw new Exception("binding not supported in substitution based evaluation")
+
   def substitutionEval: Expr => Expr =
     case v: Var   => v
     case abs: Abs => abs
@@ -81,6 +85,8 @@ object Expr:
         case Lit(x) if x == 1 => substitutionEval(trueBranch)
         case Lit(x) if x == 0 => substitutionEval(falseBranch)
         case other            => throw new Exception(s"Expected literal integer, got $other")
+
+    case _: Bind => throw new Exception("binding not supported in substitution based evaluation")
   end substitutionEval
 
   def envEval(env: Env)(expr: Expr): Value =
@@ -98,6 +104,21 @@ object Expr:
         def argValue = envEval(env)(arg) // eager arg evaluation
         def newEnv   = closure.env + (closure.varName -> argValue)
         envEval(newEnv)(closure.body)
+
+      case Bind(rec, name, body, expr) =>
+        val bodyEnv = if (!rec) env else env + (name -> Value.BlackHole)
+
+        val bodyVal = envEval(bodyEnv)(body) match
+          case closure: Value.Closure =>
+            val patchedClosureEnv = env + (name -> closure)
+            closure.env = patchedClosureEnv
+            closure
+          // closure.copy(env = patchedClosureEnv)
+
+          case other => other
+
+        val exprEnv = env + (name -> bodyVal)
+        envEval(exprEnv)(expr)
 
       case Builtin(Arithmetic(op, a, b)) =>
         op
