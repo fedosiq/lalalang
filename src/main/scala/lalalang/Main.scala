@@ -1,8 +1,8 @@
 package lalalang
 
+import lalalang.lib.Expr.{envEval, substitutionEval}
 import lalalang.lib.Show.instances.given
 import lalalang.lib.*
-import lalalang.lib.util.|>
 
 def timed[A](a: => A): (A, Long) = {
   val start = System.currentTimeMillis
@@ -12,7 +12,7 @@ def timed[A](a: => A): (A, Long) = {
 }
 
 def reduceExample(expr: Expr): Unit =
-  println("inner repr:")
+  println("input inner repr:")
   pprint.pprintln(expr)
 
   val (res, time1)        = timed(Expr.substitutionEval(expr))
@@ -28,8 +28,20 @@ def reduceExample(expr: Expr): Unit =
   pprint.log(envEvalRes)
   println("-" * 50 + "\n")
 
-/*
-def  tree(expr: Expr, indent: Int): String =
+def evalPrint[T: Show](expr: Expr, evalFn: Expr => T, debug: Boolean): Unit =
+  if (debug)
+    println("input inner repr:")
+    pprint.pprintln(expr)
+
+  val (res, time) = timed(evalFn(expr))
+
+  print(s"[${time}ms]: ")
+  pprint.pprintln(res)
+
+  println(s"${expr.show} ~> ${res.show}")
+  println("-" * 50 + "\n")
+
+def tree(expr: Expr, indent: Int): String =
   val spaces = "\n" + " " * indent
   expr match
     case v: Expr.Var => spaces + v.toString
@@ -44,7 +56,7 @@ def  tree(expr: Expr, indent: Int): String =
 
     case Expr.Cond(pred, trueBranch, falseBranch) =>
       spaces + s"Cond(${tree(pred, indent + 2)},${tree(trueBranch, indent + 2)},${tree(falseBranch, indent + 2)}"
- */
+    case _: Expr.Bind => ???
 
 @main def parseTest: Unit =
   val parser = LCParser()
@@ -63,9 +75,14 @@ def  tree(expr: Expr, indent: Int): String =
 @main def reduceTest: Unit =
   import functions.*
   import functions.booleans.*
+  import Expr.dsl.in
+  import Expr.dsl
 
-  reduceExample(identityApply(1))
-  reduceExample(incApply(42))
+  val envEvalPrint = evalPrint(_, envEval(Map.empty), debug = false)
+  // val substEvalPrint = evalPrint(_, substitutionEval, debug = false)
+
+  envEvalPrint(identityApply(1))
+  envEvalPrint(incApply(42))
 
   println(s"T = ${t.show}")
   println(s"F = ${f.show}")
@@ -73,16 +90,23 @@ def  tree(expr: Expr, indent: Int): String =
 
   println("-" * 30)
 
-  reduceExample(tf)
-  reduceExample(tft)
+  envEvalPrint(tf)
+  envEvalPrint(tft)
 
-  reduceExample(andtf)
-  reduceExample(andt)
+  envEvalPrint(andtf)
+  envEvalPrint(andt)
 
-  // reduceExample(Expr.App(eagerFixpoint, inc))
+  // envEvalPrint(Expr.App(eagerFixpoint, inc))
 
-  pprint.pprintln(fib(0, false))
-  reduceExample(fib(0, false))
-  reduceExample(fib(10, false))
-  Expr.envEval(Map.empty)(fibDirect(10)) |> println
-  fibDirect(10).show |> println
+  envEvalPrint(fib(0, false))
+
+  // substEvalPrint(fib(20, _lazy = true))
+  // envEvalPrint(fib(20, _lazy = false))
+
+  envEvalPrint(fibDirect(20))
+
+  envEvalPrint(
+    dsl
+      .rec("x", dsl.add(Expr.Var("x"), lit(1)))
+      .in(Expr.Var("x"))
+  )

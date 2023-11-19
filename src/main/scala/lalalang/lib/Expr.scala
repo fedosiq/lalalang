@@ -1,12 +1,12 @@
 package lalalang
 package lib
 
-import model.VarName
-import scala.util.chaining.*
-import util.*
+import lalalang.lib.model.VarName
+import lalalang.lib.util.*
 
-type VarName = String
-type Env     = Map[VarName, Value]
+import scala.util.chaining.*
+
+type Env = Map[VarName, Value]
 
 enum Value:
   case Number(num: Int)
@@ -22,6 +22,10 @@ object Value:
     case c: Closure => c
     case other      => throw new Exception(s"expected a closure, got $other")
 
+  def checkBlackHole(name: VarName): Value => Value =
+    case Value.BlackHole => throw new Exception(s"Unevaluated $name: BlackHole")
+    case other           => other
+
 enum Expr:
   case Var(name: VarName)
   case Abs(variable: VarName, body: Expr)
@@ -29,11 +33,40 @@ enum Expr:
   case Lit(x: Int)
   case Builtin(fn: BuiltinFn)
   case Cond(pred: Expr, trueBranch: Expr, falseBranch: Expr)
-  case Bind(recursive: Boolean, name: VarName, bindingBody: Expr, expr: Expr)
+  case Bind(binding: Expr.Binding, expr: Expr)
 
 object Expr:
   import Expr.*
   import BuiltinFn.*
+
+  case class Binding(recursive: Boolean, name: VarName, bindingBody: Expr)
+
+  object dsl:
+    type Fn2 = (Expr, Expr) => Expr
+
+    private def mkArithmetic(fn: ArithmeticFn)(a: Expr, b: Expr): Expr =
+      Builtin(Arithmetic(fn, a, b))
+
+    private def mkComparison(fn: ComparisonFn)(a: Expr, b: Expr): Expr =
+      Builtin(Comparison(fn, a, b))
+
+    val add: Fn2 = mkArithmetic(ArithmeticFn.Add)
+    val sub: Fn2 = mkArithmetic(ArithmeticFn.Sub)
+    val mul: Fn2 = mkArithmetic(ArithmeticFn.Mul)
+    val div: Fn2 = mkArithmetic(ArithmeticFn.Div)
+
+    val lt = mkComparison(ComparisonFn.Lt)
+    val gt = mkComparison(ComparisonFn.Gt)
+    val eq = mkComparison(ComparisonFn.Eq)
+
+    def rec(name: VarName, bindingBody: Expr) =
+      Binding(recursive = true, name, bindingBody)
+
+    extension (binding: Binding) def in(expr: Expr): Expr = Bind(binding, expr)
+
+    extension (expr: Expr) def where(binding: Binding): Expr = Bind(binding, expr)
+
+  end dsl
 
   def asInt(expr: Expr): Int =
     expr match
@@ -64,12 +97,12 @@ object Expr:
         Cond(subst(pred), subst(trueBranch), subst(falseBranch))
 
       case _: Bind => throw new Exception("binding not supported in substitution based evaluation")
+  end substitute
 
   def substitutionEval: Expr => Expr =
     case v: Var   => v
     case abs: Abs => abs
     case lit: Lit => lit
-
     case App(appBody, arg) => // do not eval arg here to get lazy evaluation
       substitutionEval(appBody) match
         case Abs(v, lambdaBody) => substitutionEval(substitute(v, arg)(lambdaBody))
@@ -90,22 +123,23 @@ object Expr:
   end substitutionEval
 
   def envEval(env: Env)(expr: Expr): Value =
+    val eval = envEval(env)
     expr match
       case Var(name) =>
         env
-          .get(name)
-          .getOrElse(throw new Exception(s"unbound name $name"))
+          .getOrElse(name, throw new Exception(s"unbound name $name"))
+          |> Value.checkBlackHole(name)
 
       case Abs(name, body) => Value.Closure(env, name, body)
       case Lit(n)          => Value.Number(n)
 
-      case App(body, arg) => // do not eval arg here to get lazy evaluation
-        def closure  = envEval(env)(body) |> Value.asClosure
-        def argValue = envEval(env)(arg) // eager arg evaluation
+      case App(body, arg) =>
+        def closure  = eval(body) |> Value.asClosure
+        def argValue = eval(arg) // eager arg evaluation
         def newEnv   = closure.env + (closure.varName -> argValue)
         envEval(newEnv)(closure.body)
 
-      case Bind(rec, name, body, expr) =>
+      case Bind(Binding(rec, name, body), expr) =>
         val bodyEnv = if (!rec) env else env + (name -> Value.BlackHole)
 
         val bodyVal = envEval(bodyEnv)(body) match
@@ -123,21 +157,21 @@ object Expr:
       case Builtin(Arithmetic(op, a, b)) =>
         op
           .apply(
-            Value.asInt(envEval(env)(a)),
-            Value.asInt(envEval(env)(b))
+            Value.asInt(eval(a)),
+            Value.asInt(eval(b))
           )
           .pipe(Value.Number(_))
 
       case Builtin(Comparison(op, a, b)) =>
         op
           .apply(
-            Value.asInt(envEval(env)(a)),
-            Value.asInt(envEval(env)(b))
+            Value.asInt(eval(a)),
+            Value.asInt(eval(b))
           )
           .pipe(Value.Number(_))
 
       case Cond(pred, trueBranch, falseBranch) =>
-        envEval(env)(pred) |> Value.asInt match
-          case 1 => envEval(env)(trueBranch)
-          case 0 => envEval(env)(falseBranch)
+        eval(pred) |> Value.asInt match
+          case 1 => eval(trueBranch)
+          case 0 => eval(falseBranch)
   end envEval

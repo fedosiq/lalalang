@@ -27,7 +27,14 @@ def identityApply(n: Int): Expr =
 private def lambda2(variables: (String, String), body: Expr) = {
   val (a, b) = variables
   Abs(a, Abs(b, body))
+  // lambdaN(body, a :: b :: Nil)
 }
+
+private def lambdaN(body: Expr, variables: String*): Expr =
+  variables match
+    case Nil          => throw new Exception("cannot construct lambda for empty arg list")
+    case head :: Nil  => Abs(head, body)
+    case head :: tail => Abs(head, lambdaN(body, tail*))
 
 // will recurse forever in case of eager arg evaluation
 def lazyFixpoint = {
@@ -81,6 +88,25 @@ val fibStep = {
   )
 }
 
+val fibStepDsl = {
+  def xMinus(n: Int) = dsl.sub(Var("x"), Lit(n))
+
+  val falseBranch = dsl.add(
+    App(Var("f"), xMinus(1)),
+    App(Var("f"), xMinus(2))
+  )
+
+  lambda2(
+    ("f", "x"),
+    Cond(
+      dsl.lt(Var("x"), Lit(2)),
+      Lit(1),
+      falseBranch
+    )
+  )
+
+}
+
 def fib(n: Int, _lazy: Boolean) = {
   val fn = App(if (_lazy) lazyFixpoint else eagerFixpoint, fibStep)
   App(fn, Lit(n))
@@ -100,14 +126,16 @@ def fibDirect(n: Int) = {
   )
   // let rec fib = \x -> if (x < 2) 1 else fib (x - 1) + fib (x - 2)
   Bind(
-    recursive = true,
-    name = "fib",
-    bindingBody = Abs(
-      variable = "x",
-      body = Cond(
-        pred = Builtin(Comparison(ComparisonFn.Lt, Var("x"), Lit(2))),
-        trueBranch = Lit(1),
-        falseBranch = falseBranch
+    Binding(
+      recursive = true,
+      name = "fib",
+      bindingBody = Abs(
+        variable = "x",
+        body = Cond(
+          pred = Builtin(Comparison(ComparisonFn.Lt, Var("x"), Lit(2))),
+          trueBranch = Lit(1),
+          falseBranch = falseBranch
+        )
       )
     ),
     expr = App(Var("fib"), lit(n))
@@ -115,7 +143,7 @@ def fibDirect(n: Int) = {
 }
 
 object booleans {
-  def t = Abs("t", Abs("f", body = Var("t")))
+  def t = lambda2(("t", "f"), body = Var("t"))
   def f = Abs("t", Abs("f", body = Var("f")))
 
   def and =

@@ -38,5 +38,7 @@ object Show:
       case Builtin(fn)         => fn.show
       case Cond(pred, trueBranch, falseBranch) =>
         s"if (${pred.show}) then {${trueBranch.show}} else {${falseBranch.show}}"
-      case Bind(rec, name, body, expr) => s"${expr.show} [${if (rec) "rec" else ""} $name = ${body.show}]"
+      case Bind(Binding(rec, name, body), expr) => s"${expr.show} [${if (rec) "rec" else ""} $name = ${body.show}]"
     }
+
+    given Show[Value] = instance(_.toString)
