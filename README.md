@@ -18,15 +18,3 @@ This is a lambda-calculus interpreter
 $$
 M ::= x|λx.M |M \hspace{1mm} N
 $$
-
-### Irreducible expressions
-
-- ```Y = λf.(λx.f (x x)) (λx.f (x x))```
-
-### Some examples
-
-```mermaid
-  graph LR;
-      Parser-->Expr;
-      Expr-->Evaluator;
-```
