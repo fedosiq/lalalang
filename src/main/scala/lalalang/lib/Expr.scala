@@ -62,9 +62,13 @@ object Expr:
     def rec(name: VarName, bindingBody: Expr) =
       Binding(recursive = true, name, bindingBody)
 
-    extension (binding: Binding) def in(expr: Expr): Expr = Bind(binding, expr)
+    extension (binding: Binding)
+      def in(expr: Expr): Expr =
+        Bind(binding, expr)
 
-    extension (expr: Expr) def where(binding: Binding): Expr = Bind(binding, expr)
+    extension (expr: Expr)
+      def where(binding: Binding): Expr =
+        Bind(binding, expr)
 
   end dsl
 
@@ -155,19 +159,17 @@ object Expr:
         envEval(exprEnv)(expr)
 
       case Builtin(Arithmetic(op, a, b)) =>
-        op
-          .apply(
-            Value.asInt(eval(a)),
-            Value.asInt(eval(b))
-          )
+        op(
+          Value.asInt(eval(a)),
+          Value.asInt(eval(b))
+        )
           .pipe(Value.Number(_))
 
       case Builtin(Comparison(op, a, b)) =>
-        op
-          .apply(
-            Value.asInt(eval(a)),
-            Value.asInt(eval(b))
-          )
+        op(
+          Value.asInt(eval(a)),
+          Value.asInt(eval(b))
+        )
           .pipe(Value.Number(_))
 
       case Cond(pred, trueBranch, falseBranch) =>

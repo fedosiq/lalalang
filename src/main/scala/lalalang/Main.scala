@@ -4,6 +4,8 @@ import lalalang.lib.Expr.{envEval, substitutionEval}
 import lalalang.lib.Show.instances.given
 import lalalang.lib.*
 
+import scala.util.Try
+
 def timed[A](a: => A): (A, Long) = {
   val start = System.currentTimeMillis
   val res   = a
@@ -28,7 +30,7 @@ def reduceExample(expr: Expr): Unit =
   pprint.log(envEvalRes)
   println("-" * 50 + "\n")
 
-def evalPrint[T: Show](expr: Expr, evalFn: Expr => T, debug: Boolean): Unit =
+def evalPrint[T: Show](evalFn: Expr => T, debug: Boolean)(expr: Expr): Unit =
   if (debug)
     println("input inner repr:")
     pprint.pprintln(expr)
@@ -75,38 +77,42 @@ def tree(expr: Expr, indent: Int): String =
 @main def reduceTest: Unit =
   import functions.*
   import functions.booleans.*
-  import Expr.dsl.in
-  import Expr.dsl
+  import Expr.dsl.*
 
-  val envEvalPrint = evalPrint(_, envEval(Map.empty), debug = false)
-  // val substEvalPrint = evalPrint(_, substitutionEval, debug = false)
+  // println(s"T = ${t.show}")
+  // println(s"F = ${f.show}")
+  // println(s"AND = ${and.show}")
 
-  envEvalPrint(identityApply(1))
-  envEvalPrint(incApply(42))
-
-  println(s"T = ${t.show}")
-  println(s"F = ${f.show}")
-  println(s"AND = ${and.show}")
-
-  println("-" * 30)
-
-  envEvalPrint(tf)
-  envEvalPrint(tft)
-
-  envEvalPrint(andtf)
-  envEvalPrint(andt)
-
-  // envEvalPrint(Expr.App(eagerFixpoint, inc))
-
-  envEvalPrint(fib(0, false))
-
-  // substEvalPrint(fib(20, _lazy = true))
-  // envEvalPrint(fib(20, _lazy = false))
-
-  envEvalPrint(fibDirect(20))
-
-  envEvalPrint(
-    dsl
-      .rec("x", dsl.add(Expr.Var("x"), lit(1)))
-      .in(Expr.Var("x"))
+  val expressions = List(
+    twoTimesTwo,
+    identityApply(1),
+    incApply(42),
+    tf,
+    tft,
+    andtf,
+    andt,
+    // fib(0, _lazy = true),                                  // only subst
+    // fib(20, _lazy = true),                                 // only subst
+    fib(0, _lazy = false),                                 // only env
+    fib(10, _lazy = false),                                // only env
+    fibDirect(10),                                         // only env
+    rec("x", add(Expr.Var("x"), lit(1))).in(Expr.Var("x")) // only env, blackhole // todo: add test
   )
+
+  val interpreters = List(
+    "substitutional tree interpreter" -> evalPrint(substitutionEval, debug = false),
+    "env tree interpreter"            -> evalPrint(envEval(Map.empty), debug = false),
+    "bytecode interpreter"            -> evalPrint(Bytecode.eval, debug = false)
+  )
+
+  (for
+    expr        <- expressions
+    interpreter <- interpreters
+  yield expr -> interpreter)
+    .foreach { case (expr, (name, interpreter)) =>
+      println(name)
+      Try(interpreter(expr)).getOrElse(println("failed"))
+    }
+
+  // should not complete
+  // envEvalPrint(Expr.App(eagerFixpoint, inc))

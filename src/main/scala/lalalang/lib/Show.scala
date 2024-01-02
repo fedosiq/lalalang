@@ -1,6 +1,8 @@
 package lalalang
 package lib
 
+import lalalang.lib.Bytecode.VM.{Value as VMValue}
+
 trait Show[T]:
   extension (t: T) def show: String
 
@@ -41,4 +43,5 @@ object Show:
       case Bind(Binding(rec, name, body), expr) => s"${expr.show} [${if (rec) "rec" else ""} $name = ${body.show}]"
     }
 
-    given Show[Value] = instance(_.toString)
+    given Show[Value]   = instance(_.toString)
+    given Show[VMValue] = instance(_.toString)

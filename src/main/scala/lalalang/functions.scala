@@ -4,7 +4,10 @@ package functions
 import lalalang.lib.ArithmeticFn.*
 import lalalang.lib.BuiltinFn.*
 import lalalang.lib.Expr.*
+import lalalang.lib.Expr.dsl.*
 import lalalang.lib.*
+
+def twoTimesTwo = mul(lit(2), lit(2))
 
 def lit: Int => Expr = Lit(_)
 
