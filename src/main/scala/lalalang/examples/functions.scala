@@ -147,7 +147,7 @@ def fibDirect(n: Int) = {
   )
 }
 
-object booleans {
+object bool {
   def t = lambda2(("t", "f"), body = Var("t"))
   def f = Abs("t", Abs("f", body = Var("f")))
 

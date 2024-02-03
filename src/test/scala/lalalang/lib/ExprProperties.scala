@@ -1,13 +1,12 @@
 package lalalang.lib
 
-import munit.{ScalaCheckSuite, FunSuite}
-import org.scalacheck.Prop.*
 import lalalang.lib.expr.Expr
 import lalalang.lib.interpreters.SubstituteTreeInterpreter
+import munit.{FunSuite, ScalaCheckSuite}
+import org.scalacheck.Prop.*
+import lalalang.examples.functions.*
 
 class ExprProperties extends FunSuite with ScalaCheckSuite:
-  import lalalang.functions.*
-  import lalalang.functions.booleans.*
 
   property("Literal reduces to literal") {
     forAll { (n: Int) =>

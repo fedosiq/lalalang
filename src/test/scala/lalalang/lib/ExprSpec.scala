@@ -1,15 +1,13 @@
 package lalalang
 package lib
 
-import munit.{ScalaCheckSuite, FunSuite}
+import lalalang.examples.functions.*
+import lalalang.examples.functions.bool.*
+import lalalang.lib.expr.{BuiltinFn, ComparisonFn, Expr}
 import lalalang.lib.interpreters.SubstituteTreeInterpreter
-import lalalang.lib.expr.Expr
-import lalalang.lib.expr.BuiltinFn
-import lalalang.lib.expr.ComparisonFn
+import munit.{FunSuite, ScalaCheckSuite}
 
 class ExprSpec extends FunSuite with ScalaCheckSuite:
-  import lalalang.functions.*
-  import lalalang.functions.booleans.*
 
   test("T && F should be equal to TFT") {
     assert(SubstituteTreeInterpreter.eval(tft) == SubstituteTreeInterpreter.eval(andtf))
