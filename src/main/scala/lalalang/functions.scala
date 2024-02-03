@@ -7,7 +7,8 @@ import lalalang.lib.Expr.*
 import lalalang.lib.Expr.dsl.*
 import lalalang.lib.*
 
-def twoTimesTwo = mul(lit(2), lit(2))
+def twoTimesTwo    = mul(lit(2), lit(2))
+def twoTimes3Plus4 = add(lit(2), mul(lit(3), lit(4)))
 
 def lit: Int => Expr = Lit(_)
 

@@ -85,6 +85,7 @@ def tree(expr: Expr, indent: Int): String =
 
   val expressions = List(
     twoTimesTwo,
+    twoTimes3Plus4,
     identityApply(1),
     incApply(42),
     tf,
