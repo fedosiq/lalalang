@@ -1,8 +1,9 @@
-package lalalang.lib
-package Bytecode
+package lalalang.lib.interpreters.bytecode
 
-import lalalang.lib.ArithmeticFn.*
-import lalalang.lib.ComparisonFn.*
+import lalalang.lib.expr.ArithmeticFn.*
+import lalalang.lib.expr.BuiltinFn.*
+import lalalang.lib.expr.ComparisonFn.*
+import lalalang.lib.expr.*
 import lalalang.lib.util.*
 
 import scala.collection.mutable
@@ -42,7 +43,6 @@ def eval(expr: Expr): VM.Value =
   vm.currentValue.get
 
 class BytecodeBuilder():
-
   private val bytecodeBuffer = mutable.ArrayBuffer.empty[Instr]
 
   private def emitInstr(instr: Instr): Unit =
@@ -68,9 +68,9 @@ class BytecodeBuilder():
 
   def build: List[Instr] =
     bytecodeBuffer.toList
+end BytecodeBuilder
 
 class VM(bc: Bytecode):
-
   val stack: mutable.Stack[VM.Value] = mutable.Stack.empty
 
   var codePointer: Int = 0
@@ -112,4 +112,4 @@ object VM:
   object Value:
     def asInt(v: Value): Int = v match
       case Integer(v) => v
-      case other      => throw new Exception(s"Unexpected value type: expected Integer, got ${other}")
+      // case other      => throw new Exception(s"Unexpected value type: expected Integer, got ${other}")

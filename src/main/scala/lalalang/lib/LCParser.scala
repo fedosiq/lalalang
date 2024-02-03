@@ -1,52 +1,52 @@
 package lalalang.lib
 
-import lalalang.lib.model.VarName
+import lalalang.lib.expr.Expr
+import lalalang.lib.expr.model.VarName
 import parsley.character.{char, digit, letter, letterOrDigit, oneOf, space, string}
 import parsley.combinator.many
 import parsley.{Parsley, Result}
 
-class LCParser:
+object LCParser:
   import parseUtils.*
 
   def parse(input: String): Result[String, Expr] =
     term.parse(input)
 
-  val literal: Parsley[Expr] =
+  private val literal: Parsley[Expr] =
     many(digit).map { numberChars =>
-      Expr.Lit(numberChars.mkString.toInt)
+      expr.Expr.Lit(numberChars.mkString.toInt)
     }
 
   // starts with a letter
   // may also contain digits
-  val varName: Parsley[VarName] =
+  private val varName: Parsley[VarName] =
     letter
       .flatMap { head =>
         many(letterOrDigit).map(tail => (head :: tail).mkString)
       }
       .filterNot(LCParser.reservedKeywords.contains)
 
-  val absName: Parsley[VarName] =
+  private val absName: Parsley[VarName] =
     oneOf('λ', '\\') *> varName <* char('.')
 
-  val abs: Parsley[Expr.Abs] =
+  private val abs: Parsley[Expr.Abs] =
     for
       name <- absName
       body <- term
-    yield Expr.Abs(name, body)
+    yield expr.Expr.Abs(name, body)
 
   // if (...) {...} else {...}
-  val cond: Parsley[Expr.Cond] =
+  private val cond: Parsley[Expr.Cond] =
     for
       pred        <- string("if ") *> brackets(term) <* space
       trueBranch  <- squigglyBrackets(term)
       falseBranch <- string(" else ") *> squigglyBrackets(term)
-    yield Expr.Cond(pred, trueBranch, falseBranch)
+    yield expr.Expr.Cond(pred, trueBranch, falseBranch)
 
-  val nonApp: Parsley[Expr] =
-    cond <|> brackets(term) <|> abs <|> varName.map(Expr.Var(_)) <|> literal
+  private val nonApp: Parsley[Expr] =
+    cond <|> brackets(term) <|> abs <|> varName.map(expr.Expr.Var(_)) <|> literal
 
-  val term: Parsley[Expr] =
-    chainl1(nonApp, space #> Expr.App.apply)
+  private val term: Parsley[Expr] =
+    chainl1(nonApp, space #> expr.Expr.App.apply)
 
-object LCParser:
   private val reservedKeywords = Set("if", "else", "λ")

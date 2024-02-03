@@ -1,13 +1,18 @@
 package lalalang
 package lib
 
-import lalalang.lib.Bytecode.VM.{Value as VMValue}
+import lalalang.lib.interpreters.bytecode.VM.{Value as VMValue}
+import lalalang.lib.expr.{ArithmeticFn, BuiltinFn, ComparisonFn, Expr}
+import lalalang.lib.interpreters.Value
 
 trait Show[T]:
   extension (t: T) def show: String
 
 object Show:
-  import Expr.*, ArithmeticFn.*, ComparisonFn.*, BuiltinFn.*
+  import Expr.*
+  import ArithmeticFn.*
+  import ComparisonFn.*
+  import BuiltinFn.*
 
   def apply[T: Show]: Show[T] = summon
 
@@ -45,3 +50,5 @@ object Show:
 
     given Show[Value]   = instance(_.toString)
     given Show[VMValue] = instance(_.toString)
+  end instances
+end Show

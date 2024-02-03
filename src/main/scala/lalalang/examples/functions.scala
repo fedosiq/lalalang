@@ -1,11 +1,12 @@
 package lalalang
+package examples
 package functions
 
-import lalalang.lib.ArithmeticFn.*
-import lalalang.lib.BuiltinFn.*
-import lalalang.lib.Expr.*
-import lalalang.lib.Expr.dsl.*
-import lalalang.lib.*
+import lalalang.lib.expr.ArithmeticFn.*
+import lalalang.lib.expr.BuiltinFn.*
+import lalalang.lib.expr.Expr.*
+import lalalang.lib.expr.*
+import lalalang.lib.expr.dsl.*
 
 def twoTimesTwo    = mul(lit(2), lit(2))
 def twoTimes3Plus4 = add(lit(2), mul(lit(3), lit(4)))

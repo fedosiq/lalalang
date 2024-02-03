@@ -1,13 +1,14 @@
 package lalalang
 package lib
 
-import Show.instances.given
 import lalalang.functions.booleans.andtf
+import lalalang.lib.Show.instances.given
+import lalalang.lib.expr.Expr
 
 class ParserSpec extends munit.FunSuite:
   import lalalang.functions.*
 
-  val parser = LCParser()
+  val parser = LCParser
 
   def testParser(input: String, expected: Expr): Unit =
     parser

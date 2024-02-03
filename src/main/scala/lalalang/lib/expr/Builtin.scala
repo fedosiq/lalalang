@@ -1,5 +1,6 @@
 package lalalang
 package lib
+package expr
 
 import scala.util.chaining.*
 
