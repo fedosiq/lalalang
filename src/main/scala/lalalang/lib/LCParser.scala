@@ -14,7 +14,7 @@ object LCParser:
 
   private val literal: Parsley[Expr] =
     many(digit).map { numberChars =>
-      expr.Expr.Lit(numberChars.mkString.toInt)
+      Expr.Lit(numberChars.mkString.toInt)
     }
 
   // starts with a letter
@@ -33,7 +33,7 @@ object LCParser:
     for
       name <- absName
       body <- term
-    yield expr.Expr.Abs(name, body)
+    yield Expr.Abs(name, body)
 
   // if (...) {...} else {...}
   private val cond: Parsley[Expr.Cond] =
@@ -41,12 +41,12 @@ object LCParser:
       pred        <- string("if ") *> brackets(term) <* space
       trueBranch  <- squigglyBrackets(term)
       falseBranch <- string(" else ") *> squigglyBrackets(term)
-    yield expr.Expr.Cond(pred, trueBranch, falseBranch)
+    yield Expr.Cond(pred, trueBranch, falseBranch)
 
   private val nonApp: Parsley[Expr] =
-    cond <|> brackets(term) <|> abs <|> varName.map(expr.Expr.Var(_)) <|> literal
+    cond <|> brackets(term) <|> abs <|> varName.map(Expr.Var(_)) <|> literal
 
   private val term: Parsley[Expr] =
-    chainl1(nonApp, space #> expr.Expr.App.apply)
+    chainl1(nonApp, space #> Expr.App.apply)
 
   private val reservedKeywords = Set("if", "else", "λ")

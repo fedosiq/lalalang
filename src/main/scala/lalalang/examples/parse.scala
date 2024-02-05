@@ -3,7 +3,8 @@ package lalalang.examples
 import lalalang.lib.LCParser
 import lalalang.lib.Show.instances.given
 import lalalang.lib.expr.Expr
-import lalalang.lib.interpreters.{EnvInterpreter, SubstituteTreeInterpreter}
+import lalalang.lib.interpreters.TreeInterpreter.Error
+import lalalang.lib.interpreters.{EnvInterpreter, TreeInterpreter}
 
 @main def parseTest: Unit =
   println(LCParser.parse("λa.λb.a"))
@@ -24,7 +25,7 @@ def reduceExample(expr: Expr): Unit =
 
   // val (res, time1)        = timed(SubstituteTreeInterpreter.eval(expr))
   // val (envEvalRes, time2) = timed(EnvInterpreter.eval(Map.empty)(expr))
-  val res        = SubstituteTreeInterpreter.eval(expr)
+  val res        = TreeInterpreter.eval[Either[Error, *]](expr).toOption.get
   val envEvalRes = EnvInterpreter.eval(Map.empty)(expr)
 
   // println(s"[${time1}ms] inner repr of substitution result:")

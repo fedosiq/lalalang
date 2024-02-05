@@ -4,13 +4,17 @@ package lib
 import lalalang.examples.functions.*
 import lalalang.examples.functions.bool.*
 import lalalang.lib.expr.{BuiltinFn, ComparisonFn, Expr}
-import lalalang.lib.interpreters.SubstituteTreeInterpreter
+import lalalang.lib.interpreters.TreeInterpreter
+import lalalang.lib.interpreters.TreeInterpreter.Error
 import munit.{FunSuite, ScalaCheckSuite}
 
 class ExprSpec extends FunSuite with ScalaCheckSuite:
 
+  def eval(e: Expr): Expr =
+    TreeInterpreter.eval[Either[Error, *]](e).toOption.get
+
   test("T && F should be equal to TFT") {
-    assert(SubstituteTreeInterpreter.eval(tft) == SubstituteTreeInterpreter.eval(andtf))
+    assert(eval(tft) == eval(andtf))
   }
 
   test("Cond should return reduced true branch for true predicate") {
@@ -26,7 +30,7 @@ class ExprSpec extends FunSuite with ScalaCheckSuite:
       Expr.Lit(0)
     )
 
-    assert(SubstituteTreeInterpreter.eval(expr) == Expr.Lit(43))
+    assert(eval(expr) == Expr.Lit(43))
   }
 
   test("Cond should return reduced false branch for false predicate") {
@@ -42,13 +46,13 @@ class ExprSpec extends FunSuite with ScalaCheckSuite:
       Expr.Lit(0)
     )
 
-    assert(SubstituteTreeInterpreter.eval(expr) == Expr.Lit(0))
+    assert(eval(expr) == Expr.Lit(0))
   }
 
   test("Should calculate fibonacci") {
     val testCases = Map(1 -> 1, 1 -> 1, 2 -> 2, 3 -> 3, 4 -> 5, 5 -> 8, 10 -> 89)
     testCases
       .foreach { (in, expected) =>
-        assert(SubstituteTreeInterpreter.eval(fib(in, _lazy = true)) == Expr.Lit(expected))
+        assert(eval(fib(in, _lazy = true)) == Expr.Lit(expected))
       }
   }

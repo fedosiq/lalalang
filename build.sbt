@@ -29,7 +29,8 @@ lazy val root = project
     libraryDependencies ++= Seq(
       "com.github.j-mie6" %% "parsley"          % "4.2.9",
       "com.lihaoyi"       %% "pprint"           % "0.8.1",
-      "org.scalameta"     %% "munit"            % "1.0.0-M10" % Test,
-      "org.scalameta"     %% "munit-scalacheck" % "1.0.0-M10" % Test
+      "tf.tofu"           %% "tofu"             % "0.12.0.1" cross CrossVersion.for3Use2_13,
+      "org.scalameta"     %% "munit"            % "1.0.0-M11" % Test,
+      "org.scalameta"     %% "munit-scalacheck" % "1.0.0-M11" % Test
     )
   )
