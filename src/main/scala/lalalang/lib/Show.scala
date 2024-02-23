@@ -3,7 +3,7 @@ package lib
 
 import lalalang.lib.interpreters.bytecode.VM.{Value as VMValue}
 import lalalang.lib.expr.{ArithmeticFn, BuiltinFn, ComparisonFn, Expr}
-import lalalang.lib.interpreters.Value
+import lalalang.lib.interpreters.EnvInterpreter.Value
 
 trait Show[T]:
   extension (t: T) def show: String
@@ -48,7 +48,7 @@ object Show:
       case Bind(Binding(rec, name, body), expr) => s"${expr.show} [${if (rec) "rec" else ""} $name = ${body.show}]"
     }
 
-    given Show[Value]   = instance(_.toString)
-    given Show[VMValue] = instance(_.toString)
+    given showValue[F[_]]: Show[Value[F]] = instance(_.toString)
+    given Show[VMValue]                   = instance(_.toString)
   end instances
 end Show

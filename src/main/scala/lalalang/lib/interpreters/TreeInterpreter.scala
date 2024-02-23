@@ -6,15 +6,12 @@ import lalalang.lib.expr.BuiltinFn.*
 import lalalang.lib.expr.Expr
 import lalalang.lib.expr.Expr.*
 import lalalang.lib.expr.model.VarName
-import tofu.Raise
 import tofu.syntax.raise.*
 
 /** Interprets expression by recursively substtituting variables in the AST
   */
 object TreeInterpreter:
-  type RaiseError[F[_]] = Raise[F, Error]
-
-  def eval[F[_]: RaiseError: Monad](expr: Expr): F[Expr] = expr match
+  def eval[F[_]: Error.Raise: Monad](expr: Expr): F[Expr] = expr match
     case v: Var   => v.pure
     case abs: Abs => abs.pure
     case lit: Lit => lit.pure
@@ -39,7 +36,7 @@ object TreeInterpreter:
     case _: Bind => Error.UnsupportedOp("binding").raise
   end eval
 
-  private def substitute[F[_]: RaiseError: Monad](target: VarName, replacement: Expr)(expr: Expr): F[Expr] =
+  private def substitute[F[_]: Error.Raise: Monad](target: VarName, replacement: Expr)(expr: Expr): F[Expr] =
     val subst = substitute(target, replacement)
 
     expr match
@@ -70,5 +67,7 @@ object TreeInterpreter:
   enum Error(message: String) extends Exception(message):
     case UnsupportedOp(op: String) extends Error(s"${op} not supported in substitution based evaluation")
     case UnexpectedOp(received: String, expected: String) extends Error(s"Expected ${expected}, got $received")
+  object Error:
+    type Raise[F[_]] = tofu.Raise[F, Error]
 
 end TreeInterpreter

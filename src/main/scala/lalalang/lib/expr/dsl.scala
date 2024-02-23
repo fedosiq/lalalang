@@ -23,13 +23,32 @@ val lt = mkComparison(ComparisonFn.Lt)
 val gt = mkComparison(ComparisonFn.Gt)
 val eq = mkComparison(ComparisonFn.Eq)
 
-def rec(name: VarName, bindingBody: Expr) =
+def rec(name: VarName, bindingBody: Expr): Binding =
   Binding(recursive = true, name, bindingBody)
 
+def let(name: VarName, bindingBody: Expr): Binding =
+  Binding(recursive = false, name, bindingBody)
+
+def let(nameToBinding: (VarName, Expr)): Binding =
+  Binding(recursive = false, nameToBinding._1, nameToBinding._2)
+
+def intro(nameToBindings: (VarName, Expr)*)(expr: Expr): Expr =
+  nameToBindings.toList match
+    case last :: Nil  => let(last).in(expr)
+    case head :: tail => let(head).in(intro(tail*)(expr))
+    case Nil          => ???
+
 extension (binding: Binding)
-  def in(expr: Expr): Expr =
+  infix def in(expr: Expr): Expr =
     Bind(binding, expr)
 
 extension (expr: Expr)
   def where(binding: Binding): Expr =
     Bind(binding, expr)
+
+  infix def +(expr2: Expr): Expr =
+    add(expr, expr2)
+  infix def -(expr2: Expr): Expr =
+    sub(expr, expr2)
+  infix def *(expr2: Expr): Expr =
+    mul(expr, expr2)

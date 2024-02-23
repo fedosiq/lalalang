@@ -29,7 +29,7 @@ def identityApply(n: Int): Expr =
     Lit(n)
   )
 
-private def lambda2(variables: (String, String), body: Expr) = {
+def lambda2(variables: (String, String), body: Expr): Expr = {
   val (a, b) = variables
   Abs(a, Abs(b, body))
   // lambdaN(body, a :: b :: Nil)
