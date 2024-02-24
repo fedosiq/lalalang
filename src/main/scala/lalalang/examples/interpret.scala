@@ -9,9 +9,7 @@ import lalalang.lib.util.timed
 import lalalang.lib.interpreters.TreeInterpreter.Error
 
 import scala.util.Try
-import cats.effect.concurrent.Ref
 import cats.effect.IO
-import lalalang.lib.expr.model.VarName
 
 def evalPrint[T: Show](evalFn: Expr => T, debug: Boolean)(expr: Expr): Unit =
   if (debug)
@@ -29,7 +27,6 @@ def evalPrint[T: Show](evalFn: Expr => T, debug: Boolean)(expr: Expr): Unit =
 @main def reduceTest: Unit =
   import functions.*
   import functions.bool.*
-  import expr.dsl.*
 
   // println(s"T = ${t.show}")
   // println(s"F = ${f.show}")
@@ -46,13 +43,12 @@ def evalPrint[T: Show](evalFn: Expr => T, debug: Boolean)(expr: Expr): Unit =
     andt,
     // fib(0, _lazy = true),                                  // only subst
     // fib(20, _lazy = true),                                 // only subst
-    fib(0, _lazy = false),                                 // only env
-    fib(10, _lazy = false),                                // only env
-    fibDirect(10),                                         // only env
-    rec("x", add(Expr.Var("x"), lit(1))).in(Expr.Var("x")) // only env, blackhole // todo: add test
+    fib(0, _lazy = false),  // only env
+    fib(10, _lazy = false), // only env
+    fibDirect(10),          // only env
+    diverging               // only env, blackhole // todo: add test
   )
   val envInterpreter = EnvInterpreter[IO](debug = false)
-  val env            = Ref.unsafe[IO, Map[VarName, EnvInterpreter.Value[IO]]](Map.empty)
 
   val interpreters = List(
     "substitutional tree interpreter" -> evalPrint[Expr](
@@ -60,7 +56,7 @@ def evalPrint[T: Show](evalFn: Expr => T, debug: Boolean)(expr: Expr): Unit =
       debug = false
     ),
     "env tree interpreter" -> evalPrint[EnvInterpreter.Value[IO]](
-      e => envInterpreter.eval(env)(e).unsafeRunSync,
+      e => envInterpreter.initEval(Map.empty)(e).unsafeRunSync,
       debug = false
     ),
     "bytecode interpreter" -> evalPrint[VM.Value](bytecode.eval, debug = false)

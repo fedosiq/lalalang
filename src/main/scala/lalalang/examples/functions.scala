@@ -147,6 +147,24 @@ def fibDirect(n: Int) = {
   )
 }
 
+def fact(n: Int): Expr =
+  App(Var("fact"), lit(n))
+    .where(
+      rec(
+        "fact",
+        Abs(
+          "x",
+          Cond(
+            pred = lt(Var("x"), lit(1)),
+            trueBranch = lit(1),
+            falseBranch = App(Var("fact"), Var("x") - lit(1)) * Var("x")
+          )
+        )
+      )
+    )
+
+def diverging = rec("x", Var("x") + lit(1)).in(Var("x"))
+
 object bool {
   def t = lambda2(("t", "f"), body = Var("t"))
   def f = Abs("t", Abs("f", body = Var("f")))
