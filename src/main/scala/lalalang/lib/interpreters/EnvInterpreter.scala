@@ -11,6 +11,7 @@ import lalalang.lib.expr.Expr.*
 import lalalang.lib.expr.model.VarName
 import lalalang.lib.interpreters.EnvInterpreter.Value.{asClosure, asInt}
 import lalalang.lib.interpreters.EnvInterpreter.*
+import lalalang.lib.util.cloneMap
 import tofu.syntax.raise.*
 
 class EnvInterpreter[F[_]: Sync: Err.Raise](debug: Boolean):
@@ -137,8 +138,5 @@ object EnvInterpreter:
 
   object Err:
     type Raise[F[_]] = tofu.Raise[F, Err]
-
-  private def cloneMap[F[_]: Sync, A, B](ref: Ref[F, A], f: A => B): F[Ref[F, B]] =
-    ref.get.map(f).flatMap(Ref.of)
 
 end EnvInterpreter

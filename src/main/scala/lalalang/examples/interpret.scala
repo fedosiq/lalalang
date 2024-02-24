@@ -27,7 +27,6 @@ def evalPrint[T: Show](evalFn: Expr => T, debug: Boolean)(expr: Expr): Unit =
 @main def reduceTest: Unit =
   import functions.*
   import functions.bool.*
-  import expr.dsl.*
 
   // println(s"T = ${t.show}")
   // println(s"F = ${f.show}")
@@ -44,10 +43,10 @@ def evalPrint[T: Show](evalFn: Expr => T, debug: Boolean)(expr: Expr): Unit =
     andt,
     // fib(0, _lazy = true),                                  // only subst
     // fib(20, _lazy = true),                                 // only subst
-    fib(0, _lazy = false),                                 // only env
-    fib(10, _lazy = false),                                // only env
-    fibDirect(10),                                         // only env
-    rec("x", add(Expr.Var("x"), lit(1))).in(Expr.Var("x")) // only env, blackhole // todo: add test
+    fib(0, _lazy = false),  // only env
+    fib(10, _lazy = false), // only env
+    fibDirect(10),          // only env
+    diverging               // only env, blackhole // todo: add test
   )
   val envInterpreter = EnvInterpreter[IO](debug = false)
 

@@ -2,6 +2,9 @@ package lalalang.lib
 
 package util
 
+import cats.effect.Sync
+import cats.effect.concurrent.Ref
+import cats.syntax.all.*
 import lalalang.lib.expr.Expr
 
 extension [A](a: A)
@@ -31,3 +34,6 @@ def timed[A](a: => A): (A, Long) = {
   val time  = System.currentTimeMillis - start
   res -> time
 }
+
+def cloneMap[F[_]: Sync, A, B](ref: Ref[F, A], f: A => B): F[Ref[F, B]] =
+  ref.get.map(f).flatMap(Ref.of)
