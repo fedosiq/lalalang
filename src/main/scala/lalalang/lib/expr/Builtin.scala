@@ -8,13 +8,13 @@ import scala.util.chaining.*
 enum ArithmeticFn:
   case Add, Sub, Mul, Div
 
-  def mapping: ArithmeticFn => (Int, Int) => Int =
+  private def mapping: ArithmeticFn => (Int, Int) => Int =
     case Add => (_ + _)
     case Sub => (_ - _)
     case Mul => (_ * _)
     case Div => (_ / _)
 
-  def apply(a: Int, b: Int) = mapping(this)(a, b)
+  def apply(a: Int, b: Int): Int = mapping(this)(a, b)
 
   def applyExpr(a: Expr, b: Expr): Expr.Lit =
     apply(Expr.asInt(a), Expr.asInt(b)).pipe(Expr.Lit(_))
@@ -22,12 +22,12 @@ enum ArithmeticFn:
 enum ComparisonFn:
   case Lt, Eq, Gt
 
-  def mapping: ComparisonFn => (Int, Int) => Boolean =
+  private def mapping: ComparisonFn => (Int, Int) => Boolean =
     case Lt => (_ < _)
     case Eq => (_ == _)
     case Gt => (_ > _)
 
-  def apply(a: Int, b: Int) =
+  def apply(a: Int, b: Int): Int =
     if (mapping(this)(a, b)) 1
     else 0
 

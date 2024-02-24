@@ -14,6 +14,9 @@ import lalalang.lib.interpreters.EnvInterpreter.*
 import tofu.syntax.raise.*
 
 class EnvInterpreter[F[_]: Sync: Err.Raise](debug: Boolean):
+  def initEval(env: Env[F])(expr: Expr): F[Value[F]] =
+    Ref.of(env).flatMap(eval(_)(expr))
+
   def eval(envRef: Ref[F, Env[F]])(expr: Expr): F[Value[F]] =
     val ev = eval(envRef)
     expr match
@@ -57,11 +60,12 @@ class EnvInterpreter[F[_]: Sync: Err.Raise](debug: Boolean):
 
           bodyVal <- eval(bedrock)(body).flatMap {
             case closure: Value.Closure[F] =>
-              dbgEnv(s"evaluated to closure with env")(closure.env) >>
-                envRef.get
-                  .flatTap(e => closure.env.set(e + (name -> closure)))
-                  .as(closure) <*
-                dbgEnv(s"patched closure env")(closure.env)
+              for
+                _ <- dbgEnv(s"evaluated to closure with env")(closure.env)
+                e <- envRef.get
+                _ <- closure.env.set(e + (name -> closure))
+                _ <- dbgEnv(s"patched closure env")(closure.env)
+              yield closure
 
             case other => other.pure
           }
@@ -90,38 +94,11 @@ class EnvInterpreter[F[_]: Sync: Err.Raise](debug: Boolean):
         }
   end eval
 
-  extension (env: Env[F])
-    def getBound(name: VarName): F[Value[F]] =
-      env.get(name).orRaise(Err.Unbound(name))
-
   private def dbg(msg: String): F[Unit] =
     Sync[F].delay(println(msg)).whenA(debug)
 
   private def dbgEnv(msg: String)(ref: Ref[F, Env[F]]): F[Unit] =
     showEnvRef(ref).flatMap(e => dbg(s"$msg [$e]"))
-
-  private def envToString(env: Env[F], iter: Int = 0): F[Map[VarName, String]] =
-    env.toList
-      .traverse { (key, value) =>
-        val strValue = value match
-          case Value.Closure(envRef, varName, body) =>
-            if (iter > 2) "<inf rec>".pure
-            else
-              envRef.get
-                .flatMap(envToString(_, iter + 1))
-                .map(_.toString)
-                .map(inner => s"Closure(<fn>, [$inner])")
-          case other =>
-            other.toString.pure
-        strValue.map(key -> _)
-      }
-      .map(_.toMap)
-
-  private def showEnvRef(ref: Ref[F, Env[F]]): F[Map[VarName, String]] =
-    ref.get.flatMap(envToString(_, 0))
-
-  private def cloneMap[A, B](ref: Ref[F, A], f: A => B): F[Ref[F, B]] =
-    ref.get.map(f).flatMap(Ref.of)
 
 end EnvInterpreter
 
@@ -131,11 +108,9 @@ object EnvInterpreter:
   enum Value[F[_]]:
     case Number(num: Int)
     case Closure(env: Ref[F, Env[F]], varName: VarName, body: Expr)
-    case BlackHole[F[_]]() extends Value[F]
+    case BlackHole()
 
   object Value:
-    def blackhole[F[_]]: Value[F] = Value.BlackHole()
-
     extension [F[_]: Monad: Err.Raise](v: F[Value[F]])
       def asClosure: F[Value.Closure[F]] =
         v.flatMap {
@@ -149,11 +124,6 @@ object EnvInterpreter:
         }
 
     extension [F[_]: Monad: Err.Raise](v: Value[F])
-      def checkBlackHole(name: VarName): F[Value[F]] =
-        v match
-          case Value.BlackHole() => Err.Unevaluated(name).raise
-          case other             => other.pure
-
       def notBlackHole: Boolean =
         v match
           case Value.BlackHole() => false
@@ -161,11 +131,34 @@ object EnvInterpreter:
   end Value
 
   enum Err(message: String) extends Exception(message):
-    case UnexpectedOp(received: String, expected: String) extends Err(s"Expected ${expected}, got $received")
+    case UnexpectedOp(received: String, expected: String) extends Err(s"Expected $expected, got $received")
     case Unevaluated(name: VarName)                       extends Err(s"Unevaluated $name: BlackHole")
     case Unbound(name: VarName)                           extends Err(s"Unbound name $name")
 
   object Err:
     type Raise[F[_]] = tofu.Raise[F, Err]
+
+  private def envToString[F[_]: Sync](env: Env[F], iter: Int = 0): F[Map[VarName, String]] =
+    env.toList
+      .traverse { (key, value) =>
+        val strValue = value match
+          case Value.Closure(envRef, _, _) =>
+            if (iter > 2) "<inf rec>".pure
+            else
+              envRef.get
+                .flatMap(envToString(_, iter + 1))
+                .map(_.toString)
+                .map(inner => s"Closure(<fn>, [$inner])")
+          case other =>
+            other.toString.pure
+        strValue.map(key -> _)
+      }
+      .map(_.toMap)
+
+  private def showEnvRef[F[_]: Sync](ref: Ref[F, Env[F]]): F[Map[VarName, String]] =
+    ref.get.flatMap(envToString(_))
+
+  private def cloneMap[F[_]: Sync, A, B](ref: Ref[F, A], f: A => B): F[Ref[F, B]] =
+    ref.get.map(f).flatMap(Ref.of)
 
 end EnvInterpreter
