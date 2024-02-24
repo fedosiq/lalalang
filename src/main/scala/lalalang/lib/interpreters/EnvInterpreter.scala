@@ -98,7 +98,7 @@ class EnvInterpreter[F[_]: Sync: Err.Raise](debug: Boolean):
     Sync[F].delay(println(msg)).whenA(debug)
 
   private def dbgEnv(msg: String)(ref: Ref[F, Env[F]]): F[Unit] =
-    showEnvRef(ref).flatMap(e => dbg(s"$msg [$e]"))
+    ref.get.flatMap(e => dbg(s"$msg [${e.show}]"))
 
 end EnvInterpreter
 
@@ -137,26 +137,6 @@ object EnvInterpreter:
 
   object Err:
     type Raise[F[_]] = tofu.Raise[F, Err]
-
-  private def envToString[F[_]: Sync](env: Env[F], iter: Int = 0): F[Map[VarName, String]] =
-    env.toList
-      .traverse { (key, value) =>
-        val strValue = value match
-          case Value.Closure(envRef, _, _) =>
-            if (iter > 2) "<inf rec>".pure
-            else
-              envRef.get
-                .flatMap(envToString(_, iter + 1))
-                .map(_.toString)
-                .map(inner => s"Closure(<fn>, [$inner])")
-          case other =>
-            other.toString.pure
-        strValue.map(key -> _)
-      }
-      .map(_.toMap)
-
-  private def showEnvRef[F[_]: Sync](ref: Ref[F, Env[F]]): F[Map[VarName, String]] =
-    ref.get.flatMap(envToString(_))
 
   private def cloneMap[F[_]: Sync, A, B](ref: Ref[F, A], f: A => B): F[Ref[F, B]] =
     ref.get.map(f).flatMap(Ref.of)

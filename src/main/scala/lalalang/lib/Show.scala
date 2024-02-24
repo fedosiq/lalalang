@@ -1,11 +1,11 @@
-package lalalang
-package lib
+package lalalang.lib
 
 import lalalang.lib.interpreters.bytecode.VM.{Value as VMValue}
 import lalalang.lib.expr.{ArithmeticFn, BuiltinFn, ComparisonFn, Expr}
 import lalalang.lib.interpreters.EnvInterpreter.Value
+import lalalang.lib.interpreters.EnvInterpreter
 
-trait Show[T]:
+trait Show[-T]:
   extension (t: T) def show: String
 
 object Show:
@@ -48,7 +48,15 @@ object Show:
       case Bind(Binding(rec, name, body), expr) => s"${expr.show} [${if (rec) "rec" else ""} $name = ${body.show}]"
     }
 
-    given showValue[F[_]]: Show[Value[F]] = instance(_.toString)
-    given Show[VMValue]                   = instance(_.toString)
+    given showValue[F[_]]: Show[Value[F]] = instance {
+      case Value.Closure(env, _, body) => s"Closure(<env>, ${body.show})"
+      case Value.Number(num)           => s"Number($num)"
+      case Value.BlackHole()           => "Blackhole"
+    }
+
+    given showEnv[F[_]]: Show[EnvInterpreter.Env[F]] =
+      instance(_.map((k, v) => k -> v.show).toString)
+
+    given Show[VMValue] = instance(_.toString)
   end instances
 end Show
