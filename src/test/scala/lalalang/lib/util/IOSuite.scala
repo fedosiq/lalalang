@@ -1,4 +1,4 @@
-package lalalang.lib
+package lalalang.lib.util
 
 import cats.effect.IO
 import munit.{FunSuite, Location}

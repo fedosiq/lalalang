@@ -19,9 +19,10 @@ lazy val root = project
       "-source",
       "future-migration",
       // "-Vprofile",
-      "-Xfatal-warnings",
       "-Wunused:all",
       "-Wvalue-discard",
+      "-Wnonunit-statement",
+      "-Xfatal-warnings",
       // "-Yexplicit-nulls",
       // "-Ysafe-init",
       "-Ykind-projector"

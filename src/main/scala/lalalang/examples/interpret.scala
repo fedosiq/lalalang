@@ -4,7 +4,7 @@ import lalalang.lib.Show.instances.given
 import lalalang.lib.*
 import lalalang.lib.expr.Expr
 import lalalang.lib.interpreters.*
-import lalalang.lib.interpreters.bytecode.VM
+import lalalang.lib.interpreters.bytecode.{VM, Bytecode}
 import lalalang.lib.util.timed
 import lalalang.lib.interpreters.TreeInterpreter.Error
 
@@ -59,7 +59,7 @@ def evalPrint[T: Show](evalFn: Expr => T, debug: Boolean)(expr: Expr): Unit =
       e => envInterpreter.initEval(Map.empty)(e).unsafeRunSync,
       debug = false
     ),
-    "bytecode interpreter" -> evalPrint[VM.Value](bytecode.eval, debug = false)
+    "bytecode interpreter" -> evalPrint[VM.Value](Bytecode.eval, debug = false)
   )
 
   (for

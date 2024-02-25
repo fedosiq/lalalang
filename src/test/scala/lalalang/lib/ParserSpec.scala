@@ -5,6 +5,7 @@ import lalalang.examples.functions.*
 import lalalang.examples.functions.bool.andtf
 import lalalang.lib.Show.instances.given
 import lalalang.lib.expr.Expr
+import lalalang.lib.expr.Expr.*
 
 class ParserSpec extends munit.FunSuite:
 
@@ -33,18 +34,18 @@ class ParserSpec extends munit.FunSuite:
   }
 
   test("Should parse application correctly with different parenthesis") {
-    val expected = Expr.App(
-      Expr.App(
-        Expr.Abs(
+    val expected = App(
+      App(
+        Abs(
           "a",
-          Expr.Abs(
+          Abs(
             "b",
-            Expr.Var("a")
+            Var("a")
           )
         ),
-        Expr.Lit(2)
+        Lit(2)
       ),
-      Expr.Lit(4)
+      Lit(4)
     )
 
     val validExpressions = List(
@@ -74,19 +75,19 @@ class ParserSpec extends munit.FunSuite:
   }
 
   test("Should parse variable") {
-    testParser("M", Expr.Var("M"))
+    testParser("M", Var("M"))
   }
 
   test("Should parse conditional") {
     testParser(
       "if ((λx.(x)) a) {T} else {F}",
-      Expr.Cond(
-        Expr.App(
-          Expr.Abs("x", Expr.Var("x")),
-          Expr.Var("a")
+      Cond(
+        App(
+          Abs("x", Var("x")),
+          Var("a")
         ),
-        Expr.Var("T"),
-        Expr.Var("F")
+        Var("T"),
+        Var("F")
       )
     )
   }
@@ -94,17 +95,17 @@ class ParserSpec extends munit.FunSuite:
   test("Should parse nested conditional") {
     testParser(
       "if (if ((λx.(x)) a) {T} else {F}) {T} else {F}",
-      Expr.Cond(
-        Expr.Cond(
-          Expr.App(
-            Expr.Abs("x", Expr.Var("x")),
-            Expr.Var("a")
+      Cond(
+        Cond(
+          App(
+            Abs("x", Var("x")),
+            Var("a")
           ),
-          Expr.Var("T"),
-          Expr.Var("F")
+          Var("T"),
+          Var("F")
         ),
-        Expr.Var("T"),
-        Expr.Var("F")
+        Var("T"),
+        Var("F")
       )
     )
   }
