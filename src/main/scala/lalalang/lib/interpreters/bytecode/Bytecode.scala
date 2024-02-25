@@ -1,19 +1,22 @@
 package lalalang.lib.interpreters.bytecode
 
+import cats.Monad
+import cats.data.{Chain, Writer}
+import cats.mtl.Tell
+import cats.syntax.all.*
 import lalalang.lib.expr.ArithmeticFn.*
 import lalalang.lib.expr.BuiltinFn.*
 import lalalang.lib.expr.ComparisonFn.*
 import lalalang.lib.expr.*
 
-import scala.collection.mutable
-
 type Bytecode = List[Instr]
+
+type TellInstr[F[_]] = Tell[F, Chain[Instr]]
 
 object Bytecode:
   def generate(expr: Expr): Bytecode =
-    val bb = BytecodeBuilder()
-    bb.generate(expr)
-    bb.build
+    val bb = BytecodeBuilder[Writer[Chain[Instr], *]]()
+    bb.generate(expr).run._1.toList
 
   def eval(expr: Expr): VM.Value =
     val bc = generate(expr)
@@ -42,30 +45,27 @@ object IntBinOp:
     case ComparisonFn.Eq => Eq
     case ComparisonFn.Gt => Gt
 
-class BytecodeBuilder():
-  private val bytecodeBuffer = mutable.ArrayBuffer.empty[Instr]
+class BytecodeBuilder[F[_]: TellInstr: Monad]():
+  private def emit(instr: Instr): F[Unit] =
+    Tell[F, Chain[Instr]].tell(Chain.one(instr))
 
-  private def emitInstr(instr: Instr): Unit =
-    bytecodeBuffer.addOne(instr)
-
-  def generate(expr: Expr): Unit =
+  def generate(expr: Expr): F[Unit] =
     expr match
       case Expr.Lit(x) =>
-        emitInstr(Instr.IntConst(x))
+        emit(Instr.IntConst(x))
 
       case Expr.Builtin(BuiltinFn.Arithmetic(fn, a, b)) =>
-        generate(a)
-        generate(b)
-        val opType = IntBinOp.fromArithmeticFn(fn)
-        emitInstr(Instr.IntBinOpInstr(opType))
+        generate(a) >>
+          generate(b) >>
+          emit(Instr.IntBinOpInstr(IntBinOp.fromArithmeticFn(fn)))
 
       case Expr.Builtin(BuiltinFn.Comparison(fn, a, b)) =>
-        generate(a)
-        generate(b)
-        val opType = IntBinOp.fromComparisonFn(fn)
-        emitInstr(Instr.IntBinOpInstr(opType))
+        generate(a) >>
+          generate(b) >>
+          emit(Instr.IntBinOpInstr(IntBinOp.fromComparisonFn(fn)))
+
       case _ => ???
 
-  def build: List[Instr] =
-    bytecodeBuffer.toList
+  end generate
+
 end BytecodeBuilder
