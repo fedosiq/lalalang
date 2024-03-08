@@ -1,11 +1,11 @@
 package lalalang.examples
 
+import cats.effect.IO
 import lalalang.lib.LCParser
 import lalalang.lib.Show.instances.given
 import lalalang.lib.expr.Expr
 import lalalang.lib.interpreters.TreeInterpreter.Error
 import lalalang.lib.interpreters.{EnvInterpreter, TreeInterpreter}
-import cats.effect.IO
 
 @main def parseTest: Unit =
   println(LCParser.parse("λa.λb.a"))

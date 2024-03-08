@@ -1,15 +1,16 @@
 package lalalang.examples
 
+import cats.effect.IO
 import lalalang.lib.Show.instances.given
 import lalalang.lib.*
 import lalalang.lib.expr.Expr
-import lalalang.lib.interpreters.*
-import lalalang.lib.interpreters.bytecode.{VM, Bytecode}
-import lalalang.lib.util.timed
 import lalalang.lib.interpreters.TreeInterpreter.Error
+import lalalang.lib.interpreters.*
+import lalalang.lib.interpreters.bytecode.{Bytecode, VM}
+import lalalang.lib.util.timed
 
-import scala.util.Try
-import cats.effect.IO
+import scala.util.{Failure, Success, Try}
+import lalalang.lib.expr.dsl.*
 
 def evalPrint[T: Show](evalFn: Expr => T, debug: Boolean)(expr: Expr): Unit =
   if (debug)
@@ -32,9 +33,16 @@ def evalPrint[T: Show](evalFn: Expr => T, debug: Boolean)(expr: Expr): Unit =
   // println(s"F = ${f.show}")
   // println(s"AND = ${and.show}")
 
+  def expr = let("y" -> lit(11)).in {
+    let("x" -> add(lit(3), lit(1)))
+      .in(mul(Expr.Var("x"), Expr.Var("y")))
+  }
+  val _ = expr
+
   val expressions = List(
     twoTimesTwo,
     twoTimes3Plus4,
+    expr,
     identityApply(1),
     incApply(42),
     tf,
@@ -46,7 +54,7 @@ def evalPrint[T: Show](evalFn: Expr => T, debug: Boolean)(expr: Expr): Unit =
     fib(0, _lazy = false),  // only env
     fib(10, _lazy = false), // only env
     fibDirect(10),          // only env
-    diverging               // only env, blackhole // todo: add test
+    diverging               // only env, blackhole
   )
   val envInterpreter = EnvInterpreter[IO](debug = false)
 
@@ -63,12 +71,18 @@ def evalPrint[T: Show](evalFn: Expr => T, debug: Boolean)(expr: Expr): Unit =
   )
 
   (for
-    expr        <- expressions
+    expr <- expressions
+    // _ = println(expr)
     interpreter <- interpreters
   yield expr -> interpreter)
     .foreach { case (expr, (name, interpreter)) =>
       println(name)
-      Try(interpreter(expr)).getOrElse(println("failed"))
+      Try(interpreter(expr)) match {
+        case Failure(err) =>
+          println(s"failed: ${err.getMessage()}")
+        // err.printStackTrace()
+        case Success(_) =>
+      }
     }
 
   // should not complete

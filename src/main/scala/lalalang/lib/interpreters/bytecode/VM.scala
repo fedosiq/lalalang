@@ -2,11 +2,13 @@ package lalalang.lib.interpreters.bytecode
 
 import scala.collection.mutable
 import lalalang.lib.util.|>
+import VM.*
 
 class VM(bc: Bytecode):
-  val stack: mutable.Stack[VM.Value] = mutable.Stack.empty
-
-  var codePointer: Int = 0
+  private var env: Env    = Env.empty
+  private val stack       = mutable.Stack.empty[Value]
+  private val envStack    = mutable.Stack.empty[Env]
+  private var codePointer = 0
 
   def execute: Unit =
     var shouldHalt = false
@@ -19,10 +21,10 @@ class VM(bc: Bytecode):
         case Instr.Halt =>
           shouldHalt = true
         case Instr.IntConst(v) =>
-          stack.push(VM.Value.Integer(v))
+          stack.push(Value.Integer(v))
         case Instr.IntBinOpInstr(op) =>
-          val arg2 = stack.pop() |> VM.Value.asInt
-          val arg1 = stack.pop() |> VM.Value.asInt
+          val arg2 = stack.pop() |> Value.asInt
+          val arg1 = stack.pop() |> Value.asInt
 
           val result = op match
             case IntBinOp.Add => arg1 + arg2
@@ -33,16 +35,42 @@ class VM(bc: Bytecode):
             case IntBinOp.Eq  => if arg1 == arg2 then 1 else 0
             case IntBinOp.Gt  => if arg1 > arg2 then 1 else 0
 
-          stack.push(VM.Value.Integer(result))
+          stack.push(Value.Integer(result))
 
-  def currentValue: Option[VM.Value] =
+        case Instr.EnvLoad(n) =>
+          val value = Env.find(n)(env)
+          stack.push(value)
+        case Instr.EnvSave(n) =>
+          val value = stack.pop()
+          envStack.push(env)
+          Env.add(n, value)(env)
+
+        case Instr.EnvUpdate(n) =>
+          val value = stack.pop()
+          Env.add(n, value)(env)
+        case Instr.EnvRestore(_) =>
+          env = envStack.pop()
+        case Instr.Blackhole => ???
+
+  def currentValue: Option[Value] =
     stack.headOption
 
 object VM:
+  opaque type Env = mutable.Map[ConstNum, Value]
+
+  object Env:
+    def empty: Env = mutable.Map.empty
+    def find(name: ConstNum)(env: Env): Value =
+      env.getOrElse(name, throw new NoSuchElementException(s"Unbound name: ${name}"))
+
+    def add(k: ConstNum, v: Value)(env: Env): Unit =
+      env.addOne(k -> v)
+
   enum Value:
     case Integer(v: Int)
+    case Blackhole
 
   object Value:
     def asInt(v: Value): Int = v match
       case Integer(v) => v
-      // case other      => throw new Exception(s"Unexpected value type: expected Integer, got ${other}")
+      case other      => throw new Exception(s"Unexpected value type: expected Integer, got ${other}")

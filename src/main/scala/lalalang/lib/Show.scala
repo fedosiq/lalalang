@@ -4,6 +4,7 @@ import lalalang.lib.interpreters.bytecode.VM.{Value as VMValue}
 import lalalang.lib.expr.{ArithmeticFn, BuiltinFn, ComparisonFn, Expr}
 import lalalang.lib.interpreters.EnvInterpreter.Value
 import lalalang.lib.interpreters.EnvInterpreter
+import scala.annotation.nowarn
 
 trait Show[-T]:
   extension (t: T) def show: String
@@ -32,11 +33,13 @@ object Show:
       case Gt => ">"
     }
 
+    @nowarn
     given Show[BuiltinFn] = instance {
       case Arithmetic(op, a, b) => s"${a.show} ${op.show} ${b.show}"
       case Comparison(op, a, b) => s"${a.show} ${op.show} ${b.show}"
     }
 
+    @nowarn
     given Show[Expr] = instance {
       case Var(name)           => name
       case Abs(variable, body) => s"λ$variable.${body.show}"
@@ -45,7 +48,8 @@ object Show:
       case Builtin(fn)         => fn.show
       case Cond(pred, trueBranch, falseBranch) =>
         s"if (${pred.show}) then {${trueBranch.show}} else {${falseBranch.show}}"
-      case Bind(Binding(rec, name, body), expr) => s"${expr.show} [${if (rec) "rec" else ""} $name = ${body.show}]"
+      case Bind(Binding(rec, name, body), expr) =>
+        s"${expr.show} [${if (rec) "rec " else ""}$name = ${body.show}]"
     }
 
     given showValue[F[_]]: Show[Value[F]] = instance {

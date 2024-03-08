@@ -23,7 +23,7 @@ object Main extends IOApp.Simple:
   }
 
   override def run: IO[Unit] =
-    val interpreter = EnvInterpreter[IO](debug = true)
+    val interpreter = EnvInterpreter[IO](debug = false)
     for {
       _   <- IO(println("---" * 30))
       res <- interpreter.initEval(Map.empty)(fibDirect(10))
