@@ -3,13 +3,14 @@ package lib
 
 import parsley.Parsley
 import parsley.character.char
-import parsley.combinator.between
 
 object parseUtils:
-  def betweenChars[T](ch1: Char, ch2: Char)(p: => Parsley[T]) = between(char(ch1), char(ch2), p)
+  def between[T](ch1: Char, ch2: Char)(p: => Parsley[T]) = char(ch1) *> p <* char(ch2)
+  def surrounded[T](ch: Char)                            = between(ch, ch)
 
-  def brackets[T]         = betweenChars[T]('(', ')')
-  def squigglyBrackets[T] = betweenChars[T]('{', '}')
+  def parens[T]   = between[T]('(', ')')
+  def brackets[T] = between[T]('{', '}')
+  def spaced[T]   = surrounded[T](' ')
 
   // ((M N) O) P
   // adapted from haskell's parsec
@@ -22,6 +23,6 @@ object parseUtils:
           res <- rest(f(x, y))
         yield res
 
-      doParse <|> Parsley.pure(x)
+      doParse | Parsley.pure(x)
 
-    p >>= rest
+    p.flatMap(rest)

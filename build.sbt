@@ -24,11 +24,11 @@ lazy val root = project
       "-Wnonunit-statement",
       "-Xfatal-warnings",
       // "-Yexplicit-nulls",
-      // "-Ysafe-init",
+      "-Ysafe-init",
       "-Ykind-projector"
     ),
     libraryDependencies ++= Seq(
-      "com.github.j-mie6" %% "parsley"          % "4.2.9",
+      "com.github.j-mie6" %% "parsley"          % "5.0.0-M5",
       "com.lihaoyi"       %% "pprint"           % "0.8.1",
       "tf.tofu"           %% "tofu"             % "0.12.1" cross CrossVersion.for3Use2_13,
       "org.scalameta"     %% "munit"            % "1.0.0-M11" % Test,

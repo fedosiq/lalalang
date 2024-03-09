@@ -8,17 +8,19 @@ import lalalang.lib.interpreters.TreeInterpreter.Error
 import lalalang.lib.interpreters.{EnvInterpreter, TreeInterpreter}
 
 @main def parseTest: Unit =
-  println(LCParser.parse("λa.λb.a"))
-  println(LCParser.parse("(λa.λb.a) 2 4"))
 
   val examples = List(
     "(λa.λb.a) 2 4",
     "((λt.λf.t) λt.λf.f) λt.λf.t",
     "((λp.λq.((p) q) p) λt.λf.t) λt.λf.f",
-    "λf.(λx.f (x x)) λx.f (x x)"
+    "λf.(λx.f (x x)) λx.f (x x)",
+    "let x := 42 in x"
   )
 
-  examples.foreach(LCParser.parse(_).map(reduceExample))
+  examples.foreach(
+    LCParser.parse(_)
+    // .map(reduceExample)
+  )
 
 def reduceExample(expr: Expr): Unit =
   println("input inner repr:")
