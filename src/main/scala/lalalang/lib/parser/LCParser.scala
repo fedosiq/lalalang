@@ -77,6 +77,7 @@ object LCParser:
     yield Expr.Bind(Binding(rec.getOrElse(false), name, bindBody), inExpr)
 
   // 1+1*2
+  // fixme: order of operations
   private val arithmetic: Parsley[Expr] = {
     // crutch to avoid infinite recursion
     val operand = literal
@@ -100,7 +101,7 @@ object LCParser:
       | cond.debug("cond")
       | parens(term).debug("in parens")
       | abs.debug("abstraction")
-      | ~atomic((arithmetic.debug("arithmetic")))
+      | ~atomic(arithmetic.debug("arithmetic"))
       //  |  should be able to remove all the rest  |
       // \|/                                       \|/
       | varName.map(Expr.Var(_)).debug("var")
