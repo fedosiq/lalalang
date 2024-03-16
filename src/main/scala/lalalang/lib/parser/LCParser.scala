@@ -2,7 +2,7 @@ package lalalang.lib.parser
 
 import lalalang.lib.expr.Expr.Binding
 import lalalang.lib.expr.model.VarName
-import lalalang.lib.expr.{ArithmeticFn, BuiltinFn, Expr}
+import lalalang.lib.expr.{ArithmeticFn, BuiltinFn, ComparisonFn, Expr}
 import parsley.Parsley.*
 import parsley.character.{char, digit, item, letter, letterOrDigit, oneOf, space, string}
 import parsley.combinator.{option, someTill}
@@ -15,13 +15,13 @@ object LCParser:
   import parseUtils.*
 
   def parse(input: String): Result[String, Expr] =
-    (term <* eof.debug("eof")).parse(input)
+    expression.parse(input)
 
-  private val operators =
-    Set('+', '-', '*', '/')
+  private val Operators =
+    Set('+', '-', '*', '/', '>', '<')
 
-  private val reservedKeywords =
-    Set("if", "else", "λ", "let", "rec", "in") ++ operators.map(_.toString)
+  private val ReservedKeywords =
+    Set("if", "else", "λ", "let", "rec", "in", ":=", "==") ++ Operators.map(_.toString)
 
   // 42
   private val literal: Parsley[Expr] =
@@ -38,7 +38,7 @@ object LCParser:
         .flatMap { head =>
           many(letterOrDigit).map(tail => (head :: tail).mkString)
         }
-        .filterNot(reservedKeywords.contains)
+        .filterNot(ReservedKeywords.contains)
     }
 
   // λx.
@@ -78,30 +78,47 @@ object LCParser:
 
   // 1+1*2
   // fixme: order of operations
-  private val arithmetic: Parsley[Expr] = {
+  private val arithmetics: Parsley[Expr] = {
     // crutch to avoid infinite recursion
-    val operand = literal
-      | varName.map(Expr.Var(_))
-      | term
+    val operand =
+      literal
+        | varName.map(Expr.Var(_))
+        | parens(term)
+        | term
 
-    val operator =
+    val arithmeticOp =
       char('+') #> ArithmeticFn.Add
         | char('-') #> ArithmeticFn.Sub
         | char('*') #> ArithmeticFn.Mul
         | char('/') #> ArithmeticFn.Div
 
     val applyOp: Parsley[(Expr, Expr) => Expr] =
-      operator.map(op => (a, b) => Expr.Builtin(BuiltinFn.Arithmetic(op, a, b)))
+      arithmeticOp.map { op => (a, b) => Expr.Builtin(BuiltinFn.Arithmetic(op, a, b)) }
 
     chain.left1(operand)(applyOp)
+  }
+
+  // 1>2
+  private val comp = {
+    val comparisonOp =
+      char('>') #> ComparisonFn.Gt
+        | char('<') #> ComparisonFn.Lt
+        | string("==") #> ComparisonFn.Eq
+
+    for
+      a  <- arithmetics
+      op <- comparisonOp
+      b  <- arithmetics
+    yield Expr.Builtin(BuiltinFn.Comparison(op, a, b))
   }
 
   private lazy val nonApp: Parsley[Expr] =
     binding.debug("binding")
       | cond.debug("cond")
-      | parens(term).debug("in parens")
       | abs.debug("abstraction")
-      | ~atomic(arithmetic.debug("arithmetic"))
+      | ~atomic(comp.debug("comp"))
+      | ~atomic(arithmetics.debug("binary op"))
+      | parens(term).debug("in parens")
       //  |  should be able to remove all the rest  |
       // \|/                                       \|/
       | varName.map(Expr.Var(_)).debug("var")
@@ -110,3 +127,5 @@ object LCParser:
   private lazy val term: Parsley[Expr] =
     chain.left1(nonApp)(space #> Expr.App.apply)
     // chainl1(nonApp, space #> Expr.App.apply)
+
+  private val expression = term <* eof.debug("eof")
