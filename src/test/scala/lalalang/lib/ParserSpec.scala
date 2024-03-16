@@ -12,7 +12,7 @@ import lalalang.lib.parser.LCParser
 
 class ParserSpec extends munit.FunSuite:
 
-  val parser = LCParser
+  val parser = LCParser()
 
   inline def testParser(input: String, expected: Expr): Unit =
     parser
@@ -53,8 +53,13 @@ class ParserSpec extends munit.FunSuite:
   test("Arithmetics order") {
     List(
       "1*(2+3)" -> mul(lit(1), add(lit(2), lit(3))),
-      "1*2+3"   -> add(mul(lit(1), lit(2)), lit(3))
+      "1*2+3"   -> add(mul(lit(1), lit(2)), lit(3)),
+      "1+(2*3)" -> add(lit(1), mul(lit(2), lit(3)))
     ).foreach(testParser)
+  }
+
+  test("Arithmetics operation priority".fail) {
+    testParser("1+2*3", add(lit(1), mul(lit(2), lit(3))))
   }
 
   test("Comparison") {

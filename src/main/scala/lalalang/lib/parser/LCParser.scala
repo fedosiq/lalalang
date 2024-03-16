@@ -11,17 +11,14 @@ import parsley.errors.combinator.fail
 import parsley.expr.chain
 import parsley.{Parsley, Result, debug}
 
-object LCParser:
+import scala.annotation.nowarn
+
+class LCParser:
   import parseUtils.*
+  import LCParser.*
 
   def parse(input: String): Result[String, Expr] =
     expression.parse(input)
-
-  private val Operators =
-    Set('+', '-', '*', '/', '>', '<')
-
-  private val ReservedKeywords =
-    Set("if", "else", "λ", "let", "rec", "in", ":=", "==") ++ Operators.map(_.toString)
 
   // 42
   private val literal: Parsley[Expr] =
@@ -43,9 +40,10 @@ object LCParser:
 
   // λx.
   private val absName: Parsley[VarName] =
-    oneOf('λ', '\\') *> varName <* char('.')
+    Lam *> varName <* Dot
 
   // λx.x
+  @nowarn("msg=Could not verify that the method argument is transitively initialized")
   private val abs: Parsley[Expr.Abs] =
     for
       name <- absName
@@ -55,20 +53,20 @@ object LCParser:
   // if (...) {...} else {...}
   private val cond: Parsley[Expr.Cond] =
     for
-      pred        <- atomic(string("if ")) *> parens(term) <* space
+      pred        <- atomic(If) *> spaced(parens(term))
       trueBranch  <- brackets(term)
-      falseBranch <- string(" else ") *> brackets(term)
+      falseBranch <- spaced(Else) *> brackets(term)
     yield Expr.Cond(pred, trueBranch, falseBranch)
 
   // let rec x := 42 in 2*x
   private val binding: Parsley[Expr.Bind] =
     for
-      _    <- string("let") <* space
-      rec  <- option(string("rec ") #> true)
+      _    <- Let <* space
+      rec  <- option((Rec *> space) #> true)
       name <- varName
-      _    <- spaced(string(":="))
+      _    <- spaced(Bind)
 
-      bindChars <- someTill(item, spaced(string("in")))
+      bindChars <- someTill(item, spaced(In))
       bindBody <- term.parse(bindChars.mkString) match
         case parsley.Success(a)   => pure(a)
         case parsley.Failure(err) => fail("can't parse binding body")
@@ -86,12 +84,6 @@ object LCParser:
         | parens(term)
         | term
 
-    val arithmeticOp =
-      char('+') #> ArithmeticFn.Add
-        | char('-') #> ArithmeticFn.Sub
-        | char('*') #> ArithmeticFn.Mul
-        | char('/') #> ArithmeticFn.Div
-
     val applyOp: Parsley[(Expr, Expr) => Expr] =
       arithmeticOp.map { op => (a, b) => Expr.Builtin(BuiltinFn.Arithmetic(op, a, b)) }
 
@@ -99,24 +91,18 @@ object LCParser:
   }
 
   // 1>2
-  private val comp = {
-    val comparisonOp =
-      char('>') #> ComparisonFn.Gt
-        | char('<') #> ComparisonFn.Lt
-        | string("==") #> ComparisonFn.Eq
-
+  private val comparison =
     for
       a  <- arithmetics
       op <- comparisonOp
       b  <- arithmetics
     yield Expr.Builtin(BuiltinFn.Comparison(op, a, b))
-  }
 
   private lazy val nonApp: Parsley[Expr] =
     binding.debug("binding")
       | cond.debug("cond")
       | abs.debug("abstraction")
-      | ~atomic(comp.debug("comp"))
+      | ~atomic(comparison.debug("comp"))
       | ~atomic(arithmetics.debug("binary op"))
       | parens(term).debug("in parens")
       //  |  should be able to remove all the rest  |
@@ -126,6 +112,35 @@ object LCParser:
 
   private lazy val term: Parsley[Expr] =
     chain.left1(nonApp)(space #> Expr.App.apply)
-    // chainl1(nonApp, space #> Expr.App.apply)
 
-  private val expression = term <* eof.debug("eof")
+  private val expression = term <* Eof
+
+object LCParser:
+  private val lambdaChars = Set('λ', '\\')
+
+  val Lam  = oneOf(lambdaChars)
+  val Dot  = char('.')
+  val If   = string("if")
+  val Else = string("else")
+  val Let  = string("let")
+  val Rec  = string("rec")
+  val Bind = string(":=")
+  val In   = string("in")
+  val Eof  = eof.debug("eof")
+
+  val arithmeticOp =
+    char('+') #> ArithmeticFn.Add
+      | char('-') #> ArithmeticFn.Sub
+      | char('*') #> ArithmeticFn.Mul
+      | char('/') #> ArithmeticFn.Div
+
+  val comparisonOp =
+    char('>') #> ComparisonFn.Gt
+      | char('<') #> ComparisonFn.Lt
+      | string("==") #> ComparisonFn.Eq
+
+  private val Operators =
+    Set('+', '-', '*', '/', '>', '<')
+
+  val ReservedKeywords =
+    Set("if", "else", "let", "rec", "in", ":=", "==") ++ Operators.map(_.toString) ++ lambdaChars

@@ -20,7 +20,7 @@ import lalalang.lib.parser.LCParser
 
   examples
     .map(
-      LCParser.parse(_)
+      LCParser().parse(_)
       // .map(reduceExample)
     )
     .foreach(println)
