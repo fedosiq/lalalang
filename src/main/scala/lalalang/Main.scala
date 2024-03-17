@@ -10,7 +10,7 @@ import lalalang.lib.interpreters.EnvInterpreter
 import lalalang.lib.interpreters.bytecode.Bytecode
 
 object Main extends IOApp.Simple:
-  def expr = intro(
+  val expr = intro(
     "y" -> lit(11),
     "x" -> (lit(3) + lit(1)),
     "f" -> lambda2(("a", "b"), mul(Var("a"), Var("b")))
@@ -18,7 +18,7 @@ object Main extends IOApp.Simple:
     App(App(Var("f"), Var("x")), Var("y"))
   }
 
-  def expr2 = let("y" -> lit(11)).in {
+  val expr2 = let("y" -> lit(11)).in {
     let("x" -> add(lit(3), lit(1)))
       .in(mul(Var("x"), Var("y")))
   }
