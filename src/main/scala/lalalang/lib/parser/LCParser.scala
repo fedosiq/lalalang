@@ -1,6 +1,7 @@
 package lalalang.lib.parser
 
 import lalalang.lib.expr.Expr.Binding
+import lalalang.lib.expr.dsl.mkArithmetic
 import lalalang.lib.expr.model.VarName
 import lalalang.lib.expr.{ArithmeticFn, BuiltinFn, ComparisonFn, Expr}
 import parsley.Parsley.*
@@ -85,7 +86,7 @@ class LCParser:
         | term
 
     val applyOp: Parsley[(Expr, Expr) => Expr] =
-      arithmeticOp.map { op => (a, b) => Expr.Builtin(BuiltinFn.Arithmetic(op, a, b)) }
+      arithmeticOp.map(mkArithmetic)
 
     chain.left1(operand)(applyOp)
   }
@@ -139,8 +140,10 @@ object LCParser:
       | char('<') #> ComparisonFn.Lt
       | string("==") #> ComparisonFn.Eq
 
-  private val Operators =
+  private val Operators: Set[Char] =
     Set('+', '-', '*', '/', '>', '<')
 
-  val ReservedKeywords =
-    Set("if", "else", "let", "rec", "in", ":=", "==") ++ Operators.map(_.toString) ++ lambdaChars
+  val ReservedKeywords: Set[String] =
+    Set("if", "else", "let", "rec", "in", ":=", "==")
+      ++ Operators.map(_.toString)
+      ++ lambdaChars.map(_.toString)

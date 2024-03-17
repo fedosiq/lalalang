@@ -9,9 +9,7 @@ import lalalang.lib.expr.*
 import lalalang.lib.expr.dsl.*
 
 def twoTimesTwo    = mul(lit(2), lit(2))
-def twoTimes3Plus4 = add(lit(2), mul(lit(3), lit(4)))
-
-def lit: Int => Expr = Lit(_)
+def twoPlus3Times4 = add(lit(2), mul(lit(3), lit(4)))
 
 def inc: Expr = Abs(
   variable = "x",

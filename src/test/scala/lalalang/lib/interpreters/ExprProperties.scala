@@ -1,6 +1,7 @@
 package lalalang.lib.interpreters
 
 import lalalang.examples.functions.*
+import lalalang.lib.expr.dsl.*
 import lalalang.lib.expr.Expr
 import lalalang.lib.interpreters.TreeInterpreter.Error
 import munit.{FunSuite, ScalaCheckSuite}

@@ -37,11 +37,10 @@ def evalPrint[T: Show](evalFn: Expr => T, debug: Boolean)(expr: Expr): Unit =
     let("x" -> add(lit(3), lit(1)))
       .in(mul(Expr.Var("x"), Expr.Var("y")))
   }
-  val _ = expr
 
   val expressions = List(
     twoTimesTwo,
-    twoTimes3Plus4,
+    twoPlus3Times4,
     expr,
     identityApply(1),
     incApply(42),
@@ -71,8 +70,7 @@ def evalPrint[T: Show](evalFn: Expr => T, debug: Boolean)(expr: Expr): Unit =
   )
 
   (for
-    expr <- expressions
-    // _ = println(expr)
+    expr        <- expressions
     interpreter <- interpreters
   yield expr -> interpreter)
     .foreach { case (expr, (name, interpreter)) =>

@@ -4,9 +4,10 @@ package lib
 import lalalang.examples.functions.*
 import lalalang.examples.functions.bool.andtf
 import lalalang.lib.Show.instances.given
+import lalalang.lib.expr.{Expr, dsl}
 import lalalang.lib.expr.Expr.*
 import lalalang.lib.expr.dsl.*
-import lalalang.lib.expr.{Expr, dsl}
+import lalalang.lib.expr.dsl.Conversions.{given Conversion[Int, Expr.Lit]}
 import lalalang.lib.parser.LCParser
 
 class ParserSpec extends munit.FunSuite:
@@ -31,12 +32,12 @@ class ParserSpec extends munit.FunSuite:
         )
     }
 
-  inline def shouldParse(name: String)(input: String, expected: Expr) =
+  inline def shouldParse(name: String)(input: String, expected: Expr): Unit =
     test(name) {
       testParser(input, expected)
     }
 
-  inline def shouldParse(name: String)(inputsToExpectations: (String, Expr)*) =
+  inline def shouldParse(name: String)(inputsToExpectations: (String, Expr)*): Unit =
     test(name) {
       inputsToExpectations.foreach(testParser)
     }
@@ -49,31 +50,31 @@ class ParserSpec extends munit.FunSuite:
     "λ1f.1f"
   }
 
-  shouldParse("Literal")("42", lit(42))
+  shouldParse("Literal")("42", 42)
 
   shouldParse("Simplest arithmetics")(
-    "2+2"     -> add(lit(2), lit(2)),
-    "2*2+4"   -> add(mul(lit(2), lit(2)), lit(4)),
-    "1+1+1+1" -> add(add(add(lit(1), lit(1)), lit(1)), lit(1))
+    "2+2"     -> add(2, 2),
+    "2*2+4"   -> add(mul(2, 2), 4),
+    "1+1+1+1" -> add(add(add(1, 1), 1), 1)
   )
 
   shouldParse("Arithmetics order")(
-    "1*(2+3)" -> mul(lit(1), add(lit(2), lit(3))),
-    "1*2+3"   -> add(mul(lit(1), lit(2)), lit(3)),
-    "1+(2*3)" -> add(lit(1), mul(lit(2), lit(3)))
+    "1*(2+3)" -> mul(1, add(2, 3)),
+    "1*2+3"   -> add(mul(1, 2), 3),
+    "1+(2*3)" -> add(1, mul(2, 3))
   )
 
   test("Arithmetics operation priority".fail) {
-    testParser("1+2*3", add(lit(1), mul(lit(2), lit(3))))
+    testParser("1+2*3", add(1, mul(2, 3)))
   }
 
   shouldParse("Comparison")(
-    "1<2"       -> lt(lit(1), lit(2)),
-    "42==42"    -> dsl.eq(lit(42), lit(42)),
-    "2>1"       -> gt(lit(2), lit(1)),
-    "1+2>1"     -> gt(add(lit(1), lit(2)), lit(1)),
+    "1<2"       -> lt(1, 2),
+    "42==42"    -> dsl.eq(42, 42),
+    "2>1"       -> gt(2, 1),
+    "1+2>1"     -> gt(add(1, 2), 1),
     "x>y"       -> gt(Var("x"), Var("y")),
-    "(1+2)>(1)" -> gt(add(lit(1), lit(2)), lit(1))
+    "(1+2)>(1)" -> gt(add(1, 2), 1)
   )
 
   shouldParse("Abstraction")(
@@ -114,22 +115,22 @@ class ParserSpec extends munit.FunSuite:
     testParser(withSlashes, lazyFixpoint)
   }
 
-  shouldParse("Parse generated expressions")(
+  shouldParse("Generated expressions")(
     lazyFixpoint.show -> lazyFixpoint,
     andtf.show        -> andtf
   )
 
-  shouldParse("Parse variable")("M", Var("M"))
+  shouldParse("Variable")("M", Var("M"))
 
   shouldParse("Binding")(
-    "let x := 42 in x"       -> Bind(Binding(false, "x", Lit(42)), Var("x")),
-    "let rec x := 42 in x"   -> Bind(Binding(true, "x", Lit(42)), Var("x")),
-    "let rec x := 42 in 1+1" -> Bind(Binding(true, "x", lit(42)), add(lit(1), lit(1))),
-    "let rec x := 42 in 1+x" -> Bind(Binding(true, "x", lit(42)), add(lit(1), Var("x"))),
-    "let rec x := 42 in x+1" -> Bind(Binding(true, "x", lit(42)), add(Var("x"), lit(1))),
+    "let x := 42 in x"       -> Bind(Binding(false, "x", 42), Var("x")),
+    "let rec x := 42 in x"   -> Bind(Binding(true, "x", 42), Var("x")),
+    "let rec x := 42 in 1+1" -> Bind(Binding(true, "x", 42), add(1, 1)),
+    "let rec x := 42 in 1+x" -> Bind(Binding(true, "x", 42), add(1, Var("x"))),
+    "let rec x := 42 in x+1" -> Bind(Binding(true, "x", 42), add(Var("x"), 1)),
     "let rec x := 42 in let y := 1 in x+y" -> Bind(
-      Binding(true, "x", lit(42)),
-      Bind(Binding(false, "y", lit(1)), add(Var("x"), Var("y")))
+      Binding(true, "x", 42),
+      Bind(Binding(false, "y", 1), add(Var("x"), Var("y")))
     )
   )
 

@@ -23,7 +23,7 @@ class EnvInterpreter[F[_]: Sync: Err.Raise](debug: Boolean):
     expr match
       case Var(name) =>
         for
-          _   <- dbgEnv(s"lookup var $name")(envRef)
+          _   <- dbgEnv(s"lookup var: $name")(envRef)
           env <- envRef.get
           value <- env
             .get(name)
@@ -37,7 +37,7 @@ class EnvInterpreter[F[_]: Sync: Err.Raise](debug: Boolean):
 
       case app @ App(body, arg) =>
         for
-          _ <- dbg(s"\napp ${app.show}")
+          _ <- dbg(s"\napp: ${app.show}")
 
           closure  <- ev(body).asClosure
           argValue <- ev(arg) // eager arg evaluation

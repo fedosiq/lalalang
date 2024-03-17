@@ -7,6 +7,7 @@ import lalalang.lib.expr.Expr.*
 import lalalang.lib.expr.dsl.*
 import lalalang.examples.functions.lambda2
 import lalalang.lib.interpreters.EnvInterpreter
+import lalalang.lib.interpreters.bytecode.Bytecode
 
 object Main extends IOApp.Simple:
   def expr = intro(
@@ -22,11 +23,22 @@ object Main extends IOApp.Simple:
       .in(mul(Var("x"), Var("y")))
   }
 
-  override def run: IO[Unit] =
+  private def log[T](str: T): IO[Unit] =
+    IO(println(str))
+
+  def envEval(expr: Expr) =
     val interpreter = EnvInterpreter[IO](debug = false)
+
     for {
-      _   <- IO(println("---" * 30))
-      res <- interpreter.initEval(Map.empty)(fibDirect(10))
-      // res <- interpreter.initEval(Map.empty)(fact(10))
-      _ <- IO(println(res))
+      _   <- log("---" * 30)
+      res <- interpreter.initEval(Map.empty)(expr)
+      _   <- log(res)
     } yield ()
+
+  def bytecodeEval(expr: Expr) =
+    IO.pure(Bytecode.eval(expr))
+      .flatMap(log)
+
+  override def run: IO[Unit] =
+    bytecodeEval(expr2)
+    // envEval(fibDirect(10))

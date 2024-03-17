@@ -6,12 +6,12 @@ import lalalang.lib.expr.BuiltinFn.*
 import lalalang.lib.expr.Expr.*
 import lalalang.lib.expr.model.VarName
 
-private type Fn2 = (Expr, Expr) => Expr
+private type Fn2 = (Expr, Expr) => Expr.Builtin
 
-private def mkArithmetic(fn: ArithmeticFn)(a: Expr, b: Expr): Expr =
+def mkArithmetic(fn: ArithmeticFn)(a: Expr, b: Expr): Expr.Builtin =
   Builtin(Arithmetic(fn, a, b))
 
-private def mkComparison(fn: ComparisonFn)(a: Expr, b: Expr): Expr =
+private def mkComparison(fn: ComparisonFn)(a: Expr, b: Expr): Expr.Builtin =
   Builtin(Comparison(fn, a, b))
 
 val add: Fn2 = mkArithmetic(ArithmeticFn.Add)
@@ -22,6 +22,8 @@ val div: Fn2 = mkArithmetic(ArithmeticFn.Div)
 val lt = mkComparison(ComparisonFn.Lt)
 val gt = mkComparison(ComparisonFn.Gt)
 val eq = mkComparison(ComparisonFn.Eq)
+
+def lit: Int => Expr.Lit = Lit(_)
 
 def rec(name: VarName, bindingBody: Expr): Binding =
   Binding(recursive = true, name, bindingBody)
@@ -39,11 +41,11 @@ def intro(nameToBindings: (VarName, Expr)*)(expr: Expr): Expr =
     case Nil          => ???
 
 extension (binding: Binding)
-  infix def in(expr: Expr): Expr =
+  infix def in(expr: Expr): Expr.Bind =
     Bind(binding, expr)
 
 extension (expr: Expr)
-  def where(binding: Binding): Expr =
+  def where(binding: Binding): Expr.Bind =
     Bind(binding, expr)
 
   infix def +(expr2: Expr): Expr =
@@ -52,3 +54,8 @@ extension (expr: Expr)
     sub(expr, expr2)
   infix def *(expr2: Expr): Expr =
     mul(expr, expr2)
+  infix def /(expr2: Expr): Expr =
+    div(expr, expr2)
+
+object Conversions:
+  given Conversion[Int, Expr.Lit] = lit(_)

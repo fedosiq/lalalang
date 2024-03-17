@@ -1,6 +1,8 @@
 # Lalalang
 
-This is a lambda-calculus interpreter
+This is a λ-calculus inspired language interpreter.
+
+Inspired by Artem Pianykh [video series](https://youtu.be/qRHJ4qcFbNE?si=tvEnHI8P20w-ZjH6).
 
 ## Lambda-calculus basics
 
