@@ -7,10 +7,9 @@ import lalalang.lib.expr.{ArithmeticFn, BuiltinFn, ComparisonFn, Expr}
 import parsley.Parsley.*
 import parsley.character.{char, digit, item, letter, letterOrDigit, oneOf, space, string}
 import parsley.combinator.{option, someTill}
-import parsley.debug.*
 import parsley.errors.combinator.fail
 import parsley.expr.chain
-import parsley.{Parsley, Result, debug}
+import parsley.{Parsley, Result}
 
 import scala.annotation.nowarn
 
@@ -100,16 +99,16 @@ class LCParser:
     yield Expr.Builtin(BuiltinFn.Comparison(op, a, b))
 
   private lazy val nonApp: Parsley[Expr] =
-    binding.debug("binding")
-      | cond.debug("cond")
-      | abs.debug("abstraction")
-      | ~atomic(comparison.debug("comp"))
-      | ~atomic(arithmetics.debug("binary op"))
-      | parens(term).debug("in parens")
+    binding
+      | cond
+      | abs
+      | ~atomic(comparison)
+      | ~atomic(arithmetics)
+      | parens(term)
       //  |  should be able to remove all the rest  |
       // \|/                                       \|/
-      | varName.map(Expr.Var(_)).debug("var")
-      | literal.debug("literal")
+      | varName.map(Expr.Var(_))
+      | literal
 
   private lazy val term: Parsley[Expr] =
     chain.left1(nonApp)(space #> Expr.App.apply)
@@ -127,7 +126,7 @@ object LCParser:
   val Rec  = string("rec")
   val Bind = string(":=")
   val In   = string("in")
-  val Eof  = eof.debug("eof")
+  val Eof  = eof
 
   val arithmeticOp =
     char('+') #> ArithmeticFn.Add

@@ -1,26 +1,38 @@
 package lalalang.lib.interpreters.bytecode
 
-import cats.data.{Chain, RWST}
-import cats.mtl.{Stateful, Tell}
+import cats.data.StateT
+import cats.mtl.Stateful
 import cats.syntax.all.*
 import cats.{Id, Monad}
-import lalalang.lib.expr.ArithmeticFn.*
-import lalalang.lib.expr.BuiltinFn.*
-import lalalang.lib.expr.ComparisonFn.*
 import lalalang.lib.expr.*
+import lalalang.lib.expr.BuiltinFn.*
 
-type Bytecode = List[Instr]
+type Bytecode       = List[Instr]
+type BytecodeChunks = Vector[Vector[Instr]]
 
-type TellInstr[F[_]]      = Tell[F, Chain[Instr]]
-type ConstPoolState[F[_]] = Stateful[F, ConstPool]
+type BytecodeState[F[_]] = Stateful[F, State]
+case class State(chunks: BytecodeChunks, pool: ConstPool, labelPool: LabelPool)
+
+object State {
+  def empty: State = State(Vector.empty[Vector[Instr]], ConstPool.empty, LabelPool.empty)
+}
 
 object Bytecode:
   def generate(expr: Expr): Bytecode =
-    val bb = BytecodeBuilder[RWST[Id, Unit, Chain[Instr], ConstPool, *]]()
-    bb.generate(expr).runL((), ConstPool.empty).toList
+    val bb: BytecodeBuilder[StateT[Id, State, *]] =
+      BytecodeBuilder[StateT[Id, State, *]]()
+    val entryChunk = bb.allocNamedChunk("entry")
+
+    bb
+      .generate(entryChunk.num, expr)
+      .runS(State.empty)
+      ._1
+      .last
+      .toList
 
   def eval(expr: Expr): VM.Value =
     val bc = generate(expr)
+    // bc.foreach(println)
     val vm = VM(bc)
     vm.execute
     vm.currentValue.get
@@ -29,34 +41,53 @@ enum IntBinOp:
   case Add, Sub, Mul, Div, Lt, Eq, Gt
 
 type ConstNum = Int
+type ChunkNum = Int
+type LabelNum = Int
 
-case class ConstPool(name2num: Map[String, ConstNum], num2name: Vector[String])
+case class NamedChunk(num: ChunkNum, name: LabelNum)
 
+case class Pool(name2num: Map[String, Int], num2name: Vector[String]) {
+  def appended(name: String, num: Int): Pool =
+    val newNum2name = num2name.appended(name)
+    val newName2num = name2num + (name -> num)
+    Pool(newName2num, newNum2name)
+
+  def add(name: String): (Int, Pool) =
+    name2num.get(name) match
+      case Some(num) =>
+        num -> this
+      case None =>
+        val num = num2name.length
+        num -> appended(name, num)
+}
+
+object Pool {
+  def empty: Pool = Pool(Map.empty[String, Int], Vector.empty[String])
+}
+
+opaque type ConstPool = Pool
 object ConstPool:
-  def empty = ConstPool(Map.empty[String, ConstNum], Vector.empty[String])
-  def findName(pool: ConstPool, num: ConstNum): String =
-    pool.num2name(num)
+  def empty: ConstPool = Pool.empty
 
-  private def get[F[_]: ConstPoolState]: F[ConstPool] =
-    Stateful[F, ConstPool].get
-
-  private def append[F[_]: ConstPoolState](pool: ConstPool, name: String, num: ConstNum): F[Unit] =
-    val newNum2name = pool.num2name.appended(name)
-    val newName2num = pool.name2num + (name -> num)
-    Stateful[F, ConstPool]
-      .set(ConstPool(newName2num, newNum2name))
-
-  def add[F[_]: ConstPoolState: Monad](name: String): F[ConstNum] =
-    get.flatMap { pool =>
-      pool.name2num.get(name) match
-        case Some(num) =>
-          num.pure
-        case None =>
-          val nextNum = pool.num2name.length
-          append(pool, name, nextNum)
-            .as(nextNum)
-    }
+  def add[F[_]: Monad](name: String)(using S: Stateful[F, State]): F[ConstNum] =
+    for
+      pool <- S.inspect[Pool](_.pool)
+      (newNum, newPool) = pool.add(name)
+      _ <- S.modify(_.copy(pool = newPool))
+    yield newNum
 end ConstPool
+
+opaque type LabelPool = Pool
+object LabelPool:
+  def empty: LabelPool = Pool.empty
+
+  def add[F[_]: Monad](label: String)(using S: Stateful[F, State]): F[LabelNum] =
+    for
+      pool <- S.inspect[Pool](_.labelPool)
+      (newNum, newPool) = pool.add(label)
+      _ <- S.modify(_.copy(labelPool = newPool))
+    yield newNum
+end LabelPool
 
 enum Instr:
   case Halt
@@ -67,6 +98,9 @@ enum Instr:
   case EnvSave(name: ConstNum)
   case EnvRestore(name: ConstNum)
   case EnvUpdate(name: ConstNum)
+  case MakeClosure(name: ConstNum, code: LabelNum)
+  case Apply
+  case Return
   case Blackhole
 
 object IntBinOp:
@@ -83,45 +117,73 @@ object IntBinOp:
 
 /** Emits bytecode for stack-based VM.
   */
-class BytecodeBuilder[F[_]: TellInstr: ConstPoolState: Monad]:
-  private def emit(instr: Instr): F[Unit] =
-    Tell[F, Chain[Instr]].tell(Chain.one(instr))
+class BytecodeBuilder[F[_]: BytecodeState: Monad]:
+  private def emit(chunk: ChunkNum, instr: Instr): F[Unit] =
+    Stateful[F, State]
+      .modify { state =>
+        val existing = state.chunks.get(chunk)
+        val newChunks = existing match
+          case None =>
+            state.chunks :+ Vector(instr)
 
-  def generate(expr: Expr): F[Unit] =
+          case Some(vec) =>
+            state.chunks.updated(chunk, vec.appended(instr))
+
+        state
+          .copy(chunks = newChunks)
+      }
+
+  def allocNamedChunk(name: String): NamedChunk = NamedChunk(0, 0)
+
+  def generate(chunkNum: ChunkNum, expr: Expr): F[Unit] =
     expr match
       case Expr.Lit(x) =>
-        emit(Instr.IntConst(x))
+        emit(chunkNum, Instr.IntConst(x))
 
       case Expr.Builtin(BuiltinFn.Arithmetic(fn, a, b)) =>
-        generate(a)
-          >> generate(b)
-          >> emit(Instr.IntBinOpInstr(IntBinOp.fromArithmeticFn(fn)))
+        generate(chunkNum, a)
+          >> generate(chunkNum, b)
+          >> emit(chunkNum, Instr.IntBinOpInstr(IntBinOp.fromArithmeticFn(fn)))
 
       case Expr.Builtin(BuiltinFn.Comparison(fn, a, b)) =>
-        generate(a)
-          >> generate(b)
-          >> emit(Instr.IntBinOpInstr(IntBinOp.fromComparisonFn(fn)))
+        generate(chunkNum, a)
+          >> generate(chunkNum, b)
+          >> emit(chunkNum, Instr.IntBinOpInstr(IntBinOp.fromComparisonFn(fn)))
 
       case Expr.Var(name) =>
         ConstPool
           .add(name)
-          .flatMap(nameNum => emit(Instr.EnvLoad(nameNum)))
+          .flatMap(nameNum => emit(chunkNum, Instr.EnvLoad(nameNum)))
 
       case Expr.Bind(Expr.Binding(rec, varName, body), inExpr) =>
         ConstPool.add(varName).flatMap { varNum =>
           if (!rec)
-            generate(body)
-              >> emit(Instr.EnvSave(varNum))
-              >> generate(inExpr)
-              >> emit(Instr.EnvRestore(varNum))
+            generate(chunkNum, body)
+              >> emit(chunkNum, Instr.EnvSave(varNum))
+              >> generate(chunkNum, inExpr)
+              >> emit(chunkNum, Instr.EnvRestore(varNum))
           else
-            emit(Instr.Blackhole)
-              >> emit(Instr.EnvSave(varNum))
-              >> generate(body)
-              >> emit(Instr.EnvUpdate(varNum))
-              >> generate(inExpr)
-              >> emit(Instr.EnvRestore(varNum))
+            emit(chunkNum, Instr.Blackhole)
+              >> emit(chunkNum, Instr.EnvSave(varNum))
+              >> generate(chunkNum, body)
+              >> emit(chunkNum, Instr.EnvUpdate(varNum))
+              >> generate(chunkNum, inExpr)
+              >> emit(chunkNum, Instr.EnvRestore(varNum))
         }
+
+      case Expr.Abs(v, body) =>
+        ConstPool.add(v).flatMap { varNum =>
+          val NamedChunk(bodyChunk, bodyLabel) = allocNamedChunk("Lam")
+
+          generate(bodyChunk, body) >>
+            emit(chunkNum, Instr.Return) >>
+            emit(chunkNum, Instr.MakeClosure(varNum, bodyLabel))
+        }
+
+      case Expr.App(body, arg) =>
+        generate(chunkNum, arg) >>    // stack: argValue
+          generate(chunkNum, expr) >> // stack: argValue closureValue
+          emit(chunkNum, Instr.Apply) // stack: applicationValue
 
       case _ => ???
 

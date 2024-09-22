@@ -2,11 +2,10 @@ package lalalang.lib.parser
 
 import parsley.Parsley
 import parsley.character.char
-import parsley.debug.*
 
 object parseUtils:
   def between[T](ch1: Char, ch2: Char)(p: => Parsley[T]) =
-    char(ch1).debug("in") *> p.debug("inside parens term") <* char(ch2).debug("out")
+    char(ch1) *> p <* char(ch2)
 
   def surrounded[T](ch: Char)(p: => Parsley[T]) =
     between(ch, ch)(p)

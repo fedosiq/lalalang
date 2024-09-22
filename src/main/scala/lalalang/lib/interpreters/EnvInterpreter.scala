@@ -18,6 +18,7 @@ class EnvInterpreter[F[_]: Sync: Err.Raise](debug: Boolean):
   def initEval(env: Env[F])(expr: Expr): F[Value[F]] =
     Ref.of(env).flatMap(eval(_)(expr))
 
+  // todo: maybe use State instead of Ref
   def eval(envRef: Ref[F, Env[F]])(expr: Expr): F[Value[F]] =
     val ev = eval(envRef)
     expr match
@@ -118,6 +119,7 @@ object EnvInterpreter:
           case c: Closure[F] => c.pure[F]
           case other         => Err.UnexpectedOp(other.toString, "closure").raise
         }
+
       def asInt: F[Int] =
         v.flatMap {
           case Number(n) => n.pure

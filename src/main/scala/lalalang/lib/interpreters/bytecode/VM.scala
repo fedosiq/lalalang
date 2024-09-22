@@ -4,6 +4,8 @@ import scala.collection.mutable
 import lalalang.lib.util.|>
 import VM.*
 
+/** Kind of like a stack-based VM
+  */
 class VM(bc: Bytecode):
   private var env: Env    = Env.empty
   private val stack       = mutable.Stack.empty[Value]
@@ -51,6 +53,7 @@ class VM(bc: Bytecode):
         case Instr.EnvRestore(_) =>
           env = envStack.pop()
         case Instr.Blackhole => ???
+        case _               => ???
 
   def currentValue: Option[Value] =
     stack.headOption

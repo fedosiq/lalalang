@@ -3,11 +3,10 @@ package lib
 
 import lalalang.examples.functions.*
 import lalalang.examples.functions.bool.andtf
-import lalalang.lib.Show.instances.given
-import lalalang.lib.expr.{Expr, dsl}
 import lalalang.lib.expr.Expr.*
 import lalalang.lib.expr.dsl.*
-import lalalang.lib.expr.dsl.Conversions.{given Conversion[Int, Expr.Lit]}
+import lalalang.lib.expr.dsl.Conversions.given
+import lalalang.lib.expr.{Expr, dsl}
 import lalalang.lib.parser.LCParser
 
 class ParserSpec extends munit.FunSuite:

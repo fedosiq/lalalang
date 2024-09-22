@@ -5,5 +5,5 @@ import munit.{FunSuite, Location}
 
 trait IOSuite:
   self: FunSuite =>
-  def testIO(name: String)(body: => IO[Any])(implicit loc: Location): Unit =
+  def testIO(name: String)(body: => IO[Any])(using Location): Unit =
     test(name)(body.unsafeRunSync())

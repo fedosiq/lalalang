@@ -1,7 +1,7 @@
 package lalalang.lib.interpreters
 
-import cats.Monad
 import cats.syntax.all.*
+import cats.{Applicative, Monad}
 import lalalang.lib.expr.BuiltinFn.*
 import lalalang.lib.expr.Expr
 import lalalang.lib.expr.Expr.*
@@ -30,13 +30,13 @@ object TreeInterpreter:
       eval(pred).flatMap {
         case Lit(1) => eval(trueBranch)
         case Lit(0) => eval(falseBranch)
-        case other  => Error.UnexpectedOp(other.toString, "literal integer").raise
+        case other  => Error.UnexpectedOp(other.toString, "literal integer (1 or 0)").raise
       }
 
     case _: Bind => Error.UnsupportedOp("binding").raise
   end eval
 
-  private def substitute[F[_]: Error.Raise: Monad](target: VarName, replacement: Expr)(expr: Expr): F[Expr] =
+  private def substitute[F[_]: Error.Raise: Applicative](target: VarName, replacement: Expr)(expr: Expr): F[Expr] =
     val subst = substitute(target, replacement)
 
     expr match
