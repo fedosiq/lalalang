@@ -11,17 +11,24 @@ import lalalang.lib.util.FunctorK.syntax.*
 import lalalang.lib.util.given
 import lalalang.lib.util.{FunctorK, Lens, ~>}
 
-type Bytecode       = List[Instr]
 type BytecodeChunks = Vector[Vector[Instr]]
 
-case class State(chunks: BytecodeChunks, pool: ConstPool, labelPool: LabelPool, mappings: LabelManager.Mappings)
+case class State(
+    chunks: BytecodeChunks,
+    constPool: ConstPool,
+    labelPool: LabelPool,
+    mappings: LabelManager.Mappings,
+    labelMapping: Map[LabelNum, ChunkNum]
+)
 
 object State {
-  def empty: State = State(Vector.empty[Vector[Instr]], ConstPool.empty, LabelPool.empty, LabelManager.Mappings())
+  def empty: State =
+    State(Vector.empty[Vector[Instr]], ConstPool.empty, LabelPool.empty, LabelManager.Mappings(), Map.empty)
 
-  given Lens[State, ConstPool] = new:
-    def get: State => ConstPool          = _.pool
-    def set: ConstPool => State => State = newPool => _.copy(pool = newPool)
+  given Lens[State, ConstPool] = Lens.instance(
+    _.constPool,
+    newPool => _.copy(constPool = newPool)
+  )
 
   given Lens[State, LabelManager.Mappings] = Lens.instance(
     _.mappings,
@@ -31,25 +38,20 @@ object State {
 
 type BytecodeState[F[_]] = Stateful[F, State]
 
-// type Eff = StateT[Id, State, *]
+case class Bytecode(instr: List[Instr], labelOffsets: List[Int])
 
+// type Eff = StateT[Id, State, *]
 object Bytecode:
   def generate(expr: Expr): Bytecode =
-    val labelManager: LabelManagerAlg[StateT[Id, State, *]] =
-      val lm: LabelManagerAlg[StateT[Id, LabelManager.Mappings, *]] =
-        LabelManager[StateT[Id, LabelManager.Mappings, *]]()
-      lm.mapK
+    val bb = BytecodeBuilder.make[StateT[Id, State, *], StateT[Id, LabelManager.Mappings, *]]
+    val bc = for
+      NamedChunk(entryChunk, _) <- bb.allocNamedChunk("entry")
+      _                         <- bb.generate(entryChunk, expr)
+      _                         <- bb.emit(entryChunk, Instr.Halt)
+      bc                        <- bb.build
+    yield bc
 
-    val bb: BytecodeBuilder[StateT[Id, State, *]] =
-      BytecodeBuilder[StateT[Id, State, *]](labelManager)
-
-    bb
-      .allocNamedChunk("entry")
-      .flatMap(entryChunk => bb.generate(entryChunk.chunkNum, expr))
-      .runS(State.empty)
-      ._1
-      .last
-      .toList
+    bc.runA(State.empty)
 
   def eval(expr: Expr): VM.Value =
     val bc = generate(expr)
@@ -57,50 +59,13 @@ object Bytecode:
     vm.execute
     vm.currentValue.get
 
-enum IntBinOp:
-  case Add, Sub, Mul, Div, Lt, Eq, Gt
-
 type ConstNum = Int
 type ChunkNum = Int
 type LabelNum = Int
 
 case class NamedChunk(chunkNum: ChunkNum, labelNum: LabelNum)
 
-trait LabelManagerAlg[F[_]] {
-  def add(name: String): F[LabelNum]
-}
-
-object LabelManagerAlg {
-  given FunctorK[LabelManagerAlg] with
-    def mapK[F[_], G[_]](sf: LabelManagerAlg[F])(f: F ~> G): LabelManagerAlg[G] =
-      name => f(sf.add(name))
-}
-
-class LabelManager[F[_]: LabelManager.State: Monad] extends LabelManagerAlg[F] {
-  private def appended(name: String, num: Int): F[Unit] =
-    Stateful[F, LabelManager.Mappings].modify { mappings =>
-      val newNum2name = mappings.num2name.appended(name)
-      val newName2num = mappings.name2num + (name -> num)
-      mappings.copy(newName2num, newNum2name)
-    }
-
-  def add(name: String): F[LabelNum] =
-    Stateful[F, LabelManager.Mappings].get.flatMap { mappings =>
-      val nextNum = mappings.num2name.length
-      val uniqueName =
-        if mappings.name2num.contains(name)
-        then s"$name$nextNum"
-        else name
-      appended(uniqueName, nextNum).as(nextNum)
-    }
-}
-
-object LabelManager {
-  type State[F[_]] = Stateful[F, Mappings]
-
-  case class Mappings(name2num: Map[String, LabelNum] = Map.empty, num2name: Vector[String] = Vector.empty)
-}
-
+// todo: Maybe introduce like a bidirectional dictionary
 case class Pool(name2num: Map[String, Int], num2name: Vector[String]) {
   private def appended(name: String, num: Int): Pool =
     val newNum2name = num2name.appended(name)
@@ -126,12 +91,13 @@ object ConstPool:
 
   def add[F[_]: Monad](name: String)(using S: Stateful[F, State]): F[ConstNum] =
     for
-      pool <- S.inspect[Pool](_.pool)
+      pool <- S.inspect[Pool](_.constPool)
       (newNum, newPool) = pool.add(name)
-      _ <- S.modify(_.copy(pool = newPool))
+      _ <- S.modify(_.copy(constPool = newPool))
     yield newNum
 end ConstPool
 
+// todo: remove? seems unneeded
 opaque type LabelPool = Pool
 object LabelPool:
   def empty: LabelPool = Pool.empty
@@ -144,36 +110,10 @@ object LabelPool:
     yield newNum
 end LabelPool
 
-enum Instr:
-  case Halt
-  case IntConst(v: Int)
-  case IntBinOpInstr(op: IntBinOp)
-  // case IntUnaryOpInstr(op: IntBinOp)
-  case EnvLoad(name: ConstNum)
-  case EnvSave(name: ConstNum)
-  case EnvRestore(name: ConstNum)
-  case EnvUpdate(name: ConstNum)
-  case MakeClosure(name: ConstNum, code: LabelNum)
-  case Apply
-  case Return
-  case Blackhole
-
-object IntBinOp:
-  def fromArithmeticFn: ArithmeticFn => IntBinOp =
-    case ArithmeticFn.Add => Add
-    case ArithmeticFn.Sub => Sub
-    case ArithmeticFn.Mul => Mul
-    case ArithmeticFn.Div => Div
-
-  def fromComparisonFn: ComparisonFn => IntBinOp =
-    case ComparisonFn.Lt => Lt
-    case ComparisonFn.Eq => Eq
-    case ComparisonFn.Gt => Gt
-
 /** Emits bytecode for stack-based VM.
   */
-class BytecodeBuilder[F[_]: BytecodeState: Monad](lm: LabelManagerAlg[F]):
-  private def emit(chunk: ChunkNum, instr: Instr): F[Unit] =
+class BytecodeBuilder[F[_]: BytecodeState: Monad](labelManager: LabelManagerAlg[F]):
+  def emit(chunk: ChunkNum, instr: Instr): F[Unit] =
     Stateful[F, State].modify { state =>
       val existing = state.chunks.lift(chunk)
       val newChunks = existing match
@@ -187,14 +127,39 @@ class BytecodeBuilder[F[_]: BytecodeState: Monad](lm: LabelManagerAlg[F]):
     }
 
   def allocNamedChunk(name: String): F[NamedChunk] =
-    for {
-      labelNum <- lm.add(name)
+    for
+      labelNum <- labelManager.add(name)
       chunks   <- Stateful[F, State].inspect(_.chunks)
       chunkNum = chunks.length
-      _ <- Stateful[F, State].modify(
-        _.copy(chunks = chunks :+ Vector())
+      _ <- Stateful[F, State].modify(s =>
+        s.copy(
+          chunks = chunks :+ Vector(),
+          labelMapping = s.labelMapping.updated(labelNum, chunkNum)
+        )
       )
-    } yield NamedChunk(chunkNum, labelNum)
+    yield NamedChunk(chunkNum, labelNum)
+
+  // def entryChunk =
+
+  def build: F[Bytecode] =
+    Stateful[F, State].get.map { state =>
+      val flatBytecode = state.chunks
+        .foldLeft((0, Vector.empty[Instr], Vector.empty[Int])) {
+          case ((currentOffset, flatBytecode, chunkOffsets), chunk) =>
+            (currentOffset + chunk.length, flatBytecode ++ chunk, chunkOffsets.appended(currentOffset))
+        }
+        ._2
+
+      // unsure about that
+      val offsets = state.labelMapping.toList.sorted
+        .map(_._2)
+      // .foldLeft(List.empty[Int]) { case (labelOffsets, (label, chunk)) =>
+      //   labelOffsets.updated(label, chunk)
+      // }
+
+      Bytecode(flatBytecode.toList, offsets)
+    }
+  end build
 
   def generate(chunkNum: ChunkNum, expr: Expr): F[Unit] =
     val emitCur = emit(chunkNum, _)
@@ -234,13 +199,13 @@ class BytecodeBuilder[F[_]: BytecodeState: Monad](lm: LabelManagerAlg[F]):
         }
 
       case Expr.Abs(v, body) =>
-        for {
+        for
           varNum                           <- ConstPool.add(v)
           NamedChunk(bodyChunk, bodyLabel) <- allocNamedChunk("Lam")
           _                                <- generate(bodyChunk, body)
           _                                <- emitCur(Instr.Return)
           _                                <- emitCur(Instr.MakeClosure(varNum, bodyLabel))
-        } yield ()
+        yield ()
 
       case Expr.App(body, arg) =>
         generate(chunkNum, arg) >>    // stack: [argValue]
@@ -251,3 +216,9 @@ class BytecodeBuilder[F[_]: BytecodeState: Monad](lm: LabelManagerAlg[F]):
   end generate
 
 end BytecodeBuilder
+
+object BytecodeBuilder:
+  case class BuildState()
+  def make[F[_]: BytecodeState: Monad, G[_]: LabelManager.State: Monad](using G ~> F): BytecodeBuilder[F] =
+    val lm: LabelManagerAlg[G] = LabelManager[G]()
+    BytecodeBuilder(lm.mapK[F])

@@ -15,8 +15,8 @@ class VM(bc: Bytecode):
   def execute: Unit =
     var shouldHalt = false
 
-    while (codePointer < bc.length && !shouldHalt)
-      val instr = bc(codePointer)
+    while (codePointer < bc.instr.length && !shouldHalt)
+      val instr = bc.instr(codePointer)
       codePointer += 1
 
       instr match

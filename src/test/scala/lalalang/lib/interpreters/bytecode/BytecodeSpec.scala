@@ -15,7 +15,7 @@ class BytecodeSpec extends FunSuite:
         .in(mul(Var("x"), Var("y")))
     }
 
-    val res = Bytecode.generate(expr)
+    val res = Bytecode.generate(expr).instr
 
     val expected = List(
       Instr.IntConst(11),
@@ -28,7 +28,8 @@ class BytecodeSpec extends FunSuite:
       EnvLoad(0),
       IntBinOpInstr(IntBinOp.Mul),
       EnvRestore(1),
-      EnvRestore(0)
+      EnvRestore(0),
+      Halt
     )
 
     assertEquals(res, expected)
@@ -37,7 +38,7 @@ class BytecodeSpec extends FunSuite:
   test("Bytecode generation 2".fail) {
     val expr = lambda2(("a", "b"), mul(Var("a"), Var("b")))
 
-    val res = Bytecode.generate(expr)
+    val res = Bytecode.generate(expr).instr
 
     val expected = List(
       EnvLoad(0),
@@ -46,7 +47,8 @@ class BytecodeSpec extends FunSuite:
       Return,
       MakeClosure(1, 0),
       Return,
-      MakeClosure(0, 0)
+      MakeClosure(0, 0),
+      Halt
     )
 
     assertEquals(res, expected)

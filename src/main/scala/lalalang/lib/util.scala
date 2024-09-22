@@ -62,11 +62,8 @@ def lensMapState[F[_]: Monad, S, T, A](lens: Lens[S, T]): StateT[F, T, A] => Sta
 
 type ~>[-F[_], +G[_]] = [A] => F[A] => G[A]
 
-given lensMapStateFK[F[_]: Monad, S, T](using lens: Lens[S, T]): (StateT[F, T, *] ~> StateT[F, S, *]) =
+given [F[_]: Monad, S, T](using lens: Lens[S, T]): (StateT[F, T, *] ~> StateT[F, S, *]) =
   [A] => fa => lensMapState(lens)(fa)
-
-// given [F[_]: Monad, S, T: Lens[S, *]]: (StateT[F, T, *] ~> StateT[F, S, *]) =
-//   lensMapStateFK
 
 trait FunctorK[Alg[_[_]]]:
   def mapK[F[_], G[_]](alg: Alg[F])(f: F ~> G): Alg[G]
