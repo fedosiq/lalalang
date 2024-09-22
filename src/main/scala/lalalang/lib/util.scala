@@ -2,6 +2,8 @@ package lalalang.lib
 
 package util
 
+import cats.Monad
+import cats.data.StateT
 import cats.effect.Sync
 import cats.effect.concurrent.Ref
 import cats.syntax.all.*
@@ -37,3 +39,41 @@ def timed[A](a: => A): (A, Long) = {
 
 def cloneMap[F[_]: Sync, A, B](ref: Ref[F, A], f: A => B): F[Ref[F, B]] =
   ref.get.map(f).flatMap(Ref.of)
+
+type Get[S, A] = S => A
+type Set[S, A] = A => S => S
+
+trait Lens[S, A]:
+  def get: Get[S, A]
+  def set: Set[S, A]
+
+object Lens:
+  def instance[S, A](_get: S => A, _set: A => S => S): Lens[S, A] =
+    new:
+      def get: S => A    = _get
+      def set: Set[S, A] = _set
+
+def lensMapState[F[_]: Monad, S, T, A](lens: Lens[S, T]): StateT[F, T, A] => StateT[F, S, A] =
+  stateT =>
+    StateT { s =>
+      for (res, a) <- stateT.run(lens.get(s))
+      yield (lens.set(res)(s), a)
+    }
+
+type ~>[-F[_], +G[_]] = [A] => F[A] => G[A]
+
+given lensMapStateFK[F[_]: Monad, S, T](using lens: Lens[S, T]): (StateT[F, T, *] ~> StateT[F, S, *]) =
+  [A] => fa => lensMapState(lens)(fa)
+
+// given [F[_]: Monad, S, T: Lens[S, *]]: (StateT[F, T, *] ~> StateT[F, S, *]) =
+//   lensMapStateFK
+
+trait FunctorK[Alg[_[_]]]:
+  def mapK[F[_], G[_]](alg: Alg[F])(f: F ~> G): Alg[G]
+
+object FunctorK:
+  def apply[Alg[_[_]]: FunctorK] = summon[FunctorK[Alg]]
+
+  object syntax:
+    extension [Alg[F[_]]: FunctorK, F[_]](alg: Alg[F])
+      def mapK[G[_]](using f: F ~> G): Alg[G] = FunctorK[Alg].mapK(alg)(f)

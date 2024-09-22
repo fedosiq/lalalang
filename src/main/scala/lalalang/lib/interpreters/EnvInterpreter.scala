@@ -18,7 +18,6 @@ class EnvInterpreter[F[_]: Sync: Err.Raise](debug: Boolean):
   def initEval(env: Env[F])(expr: Expr): F[Value[F]] =
     Ref.of(env).flatMap(eval(_)(expr))
 
-  // todo: maybe use State instead of Ref
   def eval(envRef: Ref[F, Env[F]])(expr: Expr): F[Value[F]] =
     val ev = eval(envRef)
     expr match
@@ -65,7 +64,7 @@ class EnvInterpreter[F[_]: Sync: Err.Raise](debug: Boolean):
               for
                 _ <- dbgEnv(s"evaluated to closure with env")(closure.env)
                 e <- envRef.get
-                _ <- closure.env.set(e + (name -> closure))
+                _ <- closure.env.set(e + (name -> closure)) // we use Ref because of this
                 _ <- dbgEnv(s"patched closure env")(closure.env)
               yield closure
 
