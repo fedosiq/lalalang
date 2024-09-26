@@ -8,16 +8,16 @@ import lalalang.lib.expr.dsl.Conversions.given Conversion[Int, Expr.Lit]
 import lalalang.lib.interpreters.bytecode.Instr.*
 import munit.FunSuite
 
-class BytecodeSpec extends FunSuite:
-  test("Bytecode generation 1") {
+class BytecodeGeneratorSpec extends FunSuite:
+  test("Bindings") {
     val expr = let("y" -> 11).in {
       let("x" -> add(3, 1))
-        .in(mul(Var("x"), Var("y")))
+        .in(Var("x") * Var("y"))
     }
 
     val res = Bytecode.generate(expr).instr
 
-    val expected = List(
+    val expected = Vector(
       Instr.IntConst(11),
       EnvSave(0),
       IntConst(3),
@@ -35,20 +35,24 @@ class BytecodeSpec extends FunSuite:
     assertEquals(res, expected)
   }
 
-  test("Bytecode generation 2".fail) {
-    val expr = lambda2(("a", "b"), mul(Var("a"), Var("b")))
+  test("Lambdas") {
+    val expr = Expr.App(Expr.App(lambda2(("a", "b"), Var("a") * Var("b")), lit(21)), lit(2))
 
     val res = Bytecode.generate(expr).instr
 
-    val expected = List(
+    val expected = Vector(
+      IntConst(2),
+      IntConst(21),
+      MakeClosure(0, 1),
+      Apply,
+      Apply,
+      Halt,
+      MakeClosure(1, 2),
+      Return,
       EnvLoad(0),
       EnvLoad(1),
       IntBinOpInstr(IntBinOp.Mul),
-      Return,
-      MakeClosure(1, 0),
-      Return,
-      MakeClosure(0, 0),
-      Halt
+      Return
     )
 
     assertEquals(res, expected)

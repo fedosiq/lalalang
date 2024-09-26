@@ -9,6 +9,8 @@ import cats.effect.concurrent.Ref
 import cats.syntax.all.*
 import lalalang.lib.expr.Expr
 
+type Id[T] = T
+
 extension [A](a: A)
   inline infix def |>[B](f: A => B): B =
     f(a)

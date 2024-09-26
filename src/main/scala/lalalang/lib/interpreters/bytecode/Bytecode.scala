@@ -1,15 +1,15 @@
 package lalalang.lib.interpreters.bytecode
 
+import cats.Monad
 import cats.data.StateT
 import cats.mtl.Stateful
 import cats.syntax.flatMap.*
 import cats.syntax.functor.*
-import cats.{Id, Monad}
 import lalalang.lib.expr.*
 import lalalang.lib.expr.BuiltinFn.*
 import lalalang.lib.util.FunctorK.syntax.*
 import lalalang.lib.util.given
-import lalalang.lib.util.{FunctorK, Lens, ~>}
+import lalalang.lib.util.{FunctorK, Id, Lens, ~>}
 
 type BytecodeChunks = Vector[Vector[Instr]]
 
@@ -38,18 +38,19 @@ object State {
 
 type BytecodeState[F[_]] = Stateful[F, State]
 
-case class Bytecode(instr: List[Instr], labelOffsets: List[Int])
+case class Bytecode(instr: Vector[Instr], labelOffsets: Vector[Int])
 
 // type Eff = StateT[Id, State, *]
 object Bytecode:
   def generate(expr: Expr): Bytecode =
     val bb = BytecodeBuilder.make[StateT[Id, State, *], StateT[Id, LabelManager.Mappings, *]]
-    val bc = for
-      NamedChunk(entryChunk, _) <- bb.allocNamedChunk("entry")
-      _                         <- bb.generate(entryChunk, expr)
-      _                         <- bb.emit(entryChunk, Instr.Halt)
-      bc                        <- bb.build
-    yield bc
+    val bc =
+      for
+        NamedChunk(entryChunk, _) <- bb.allocNamedChunk("entry")
+        _                         <- bb.generate(entryChunk, expr)
+        _                         <- bb.emit(entryChunk, Instr.Halt)
+        bc                        <- bb.build
+      yield bc
 
     bc.runA(State.empty)
 
@@ -115,6 +116,7 @@ end LabelPool
 class BytecodeBuilder[F[_]: BytecodeState: Monad](labelManager: LabelManagerAlg[F]):
   def emit(chunk: ChunkNum, instr: Instr): F[Unit] =
     Stateful[F, State].modify { state =>
+
       val existing = state.chunks.lift(chunk)
       val newChunks = existing match
         case None =>
@@ -143,38 +145,37 @@ class BytecodeBuilder[F[_]: BytecodeState: Monad](labelManager: LabelManagerAlg[
 
   def build: F[Bytecode] =
     Stateful[F, State].get.map { state =>
-      val flatBytecode = state.chunks
-        .foldLeft((0, Vector.empty[Instr], Vector.empty[Int])) {
-          case ((currentOffset, flatBytecode, chunkOffsets), chunk) =>
-            (currentOffset + chunk.length, flatBytecode ++ chunk, chunkOffsets.appended(currentOffset))
+      val flatBytecode = state.chunks.flatten
+
+      val (_, chunkOffsets) = state.chunks
+        .foldLeft((0, Vector.empty[Int])) { case ((currentOffset, chunkOffsets), chunk) =>
+          (currentOffset + chunk.length, chunkOffsets.appended(currentOffset))
         }
-        ._2
 
-      // unsure about that
-      val offsets = state.labelMapping.toList.sorted
-        .map(_._2)
-      // .foldLeft(List.empty[Int]) { case (labelOffsets, (label, chunk)) =>
-      //   labelOffsets.updated(label, chunk)
-      // }
+      val offsets = state.labelMapping.valuesIterator
+        .map(chunkOffsets)
+        .toVector
 
-      Bytecode(flatBytecode.toList, offsets)
+      Bytecode(flatBytecode, offsets)
     }
   end build
 
   def generate(chunkNum: ChunkNum, expr: Expr): F[Unit] =
-    val emitCur = emit(chunkNum, _)
+    val emitCur     = emit(chunkNum, _)
+    val generateCur = generate(chunkNum, _)
+
     expr match
       case Expr.Lit(x) =>
         emitCur(Instr.IntConst(x))
 
       case Expr.Builtin(BuiltinFn.Arithmetic(fn, a, b)) =>
-        generate(chunkNum, a)
-          >> generate(chunkNum, b)
+        generateCur(a)
+          >> generateCur(b)
           >> emitCur(Instr.IntBinOpInstr(IntBinOp.fromArithmeticFn(fn)))
 
       case Expr.Builtin(BuiltinFn.Comparison(fn, a, b)) =>
-        generate(chunkNum, a)
-          >> generate(chunkNum, b)
+        generateCur(a)
+          >> generateCur(b)
           >> emitCur(Instr.IntBinOpInstr(IntBinOp.fromComparisonFn(fn)))
 
       case Expr.Var(name) =>
@@ -185,34 +186,34 @@ class BytecodeBuilder[F[_]: BytecodeState: Monad](labelManager: LabelManagerAlg[
       case Expr.Bind(Expr.Binding(rec, varName, body), inExpr) =>
         ConstPool.add(varName).flatMap { varNum =>
           if (!rec)
-            generate(chunkNum, body)
+            generateCur(body)
               >> emitCur(Instr.EnvSave(varNum))
-              >> generate(chunkNum, inExpr)
+              >> generateCur(inExpr)
               >> emitCur(Instr.EnvRestore(varNum))
           else
             emitCur(Instr.Blackhole)
               >> emitCur(Instr.EnvSave(varNum))
-              >> generate(chunkNum, body)
+              >> generateCur(body)
               >> emitCur(Instr.EnvUpdate(varNum))
-              >> generate(chunkNum, inExpr)
+              >> generateCur(inExpr)
               >> emitCur(Instr.EnvRestore(varNum))
         }
 
       case Expr.Abs(v, body) =>
         for
-          varNum                           <- ConstPool.add(v)
           NamedChunk(bodyChunk, bodyLabel) <- allocNamedChunk("Lam")
           _                                <- generate(bodyChunk, body)
-          _                                <- emitCur(Instr.Return)
+          _                                <- emit(bodyChunk, Instr.Return)
+          varNum                           <- ConstPool.add(v)
           _                                <- emitCur(Instr.MakeClosure(varNum, bodyLabel))
         yield ()
 
       case Expr.App(body, arg) =>
-        generate(chunkNum, arg) >>    // stack: [argValue]
-          generate(chunkNum, expr) >> // stack: [argValue, closureValue]
-          emitCur(Instr.Apply)        // stack: [applicationValue]
+        generateCur(arg) >>    // stack: [argValue]
+          generateCur(body) >> // stack: [argValue, closureValue]
+          emitCur(Instr.Apply) // stack: [applicationValue]
 
-      case _ => ???
+      case Expr.Cond(pred, trueBranch, falseBranch) => ???
   end generate
 
 end BytecodeBuilder

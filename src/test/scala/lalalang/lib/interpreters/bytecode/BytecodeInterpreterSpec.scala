@@ -1,11 +1,11 @@
 package lalalang.lib.interpreters.bytecode
 
-import munit.FunSuite
-import lalalang.examples.functions.twoPlus3Times4
-import lalalang.lib.expr.dsl.*
+import lalalang.examples.functions.{lambda2, twoPlus3Times4}
 import lalalang.lib.expr.Expr
-import lalalang.lib.expr.Expr.Var
-import lalalang.lib.expr.dsl.Conversions.{given Conversion[Int, Expr.Lit]}
+import lalalang.lib.expr.Expr.{App, Var}
+import lalalang.lib.expr.dsl.*
+import lalalang.lib.expr.dsl.Conversions.given Conversion[Int, Expr.Lit]
+import munit.FunSuite
 
 class BytecodeInterpreterSpec extends FunSuite:
   test("Arithmetics") {
@@ -19,4 +19,12 @@ class BytecodeInterpreterSpec extends FunSuite:
     }
 
     assertEquals(Bytecode.eval(expr), VM.Value.Integer(44))
+  }
+
+  test("Lambdas") {
+    val expr =
+      let("f" -> lambda2(("a", "b"), Var("a") * Var("b")))
+        .in(App(App(Var("f"), 11), 3))
+
+    assertEquals(Bytecode.eval(expr), VM.Value.Integer(33))
   }
