@@ -16,7 +16,7 @@ type BytecodeChunks = Vector[Vector[Instr]]
 case class State(
     chunks: BytecodeChunks,
     constPool: ConstPool,
-    labelPool: LabelPool,
+    labelPool: LabelPool, // unused?
     mappings: LabelManager.Mappings,
     labelMapping: Map[LabelNum, ChunkNum]
 )
@@ -219,7 +219,6 @@ class BytecodeBuilder[F[_]: BytecodeState: Monad](labelManager: LabelManagerAlg[
 end BytecodeBuilder
 
 object BytecodeBuilder:
-  case class BuildState()
   def make[F[_]: BytecodeState: Monad, G[_]: LabelManager.State: Monad](using G ~> F): BytecodeBuilder[F] =
     val lm: LabelManagerAlg[G] = LabelManager[G]()
     BytecodeBuilder(lm.mapK[F])

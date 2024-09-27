@@ -1,6 +1,5 @@
 package lalalang.lib.interpreters.bytecode
 
-import lalalang.examples.functions.lambda2
 import lalalang.lib.expr.Expr
 import lalalang.lib.expr.Expr.Var
 import lalalang.lib.expr.dsl.*
@@ -17,6 +16,7 @@ class BytecodeGeneratorSpec extends FunSuite:
 
     val res = Bytecode.generate(expr).instr
 
+    // property: same number of env saves and restores
     val expected = Vector(
       Instr.IntConst(11),
       EnvSave(0),

@@ -40,6 +40,18 @@ def intro(nameToBindings: (VarName, Expr)*)(expr: Expr): Expr =
     case head :: tail => let(head).in(intro(tail*)(expr))
     case Nil          => ???
 
+def lambda2(variables: (String, String), body: Expr): Expr = {
+  val (a, b) = variables
+  Abs(a, Abs(b, body))
+  // lambdaN(body, a :: b :: Nil)
+}
+
+private def lambdaN(body: Expr, variables: String*): Expr =
+  variables match
+    case Nil          => throw new Exception("cannot construct lambda for empty arg list")
+    case head :: Nil  => Abs(head, body)
+    case head :: tail => Abs(head, lambdaN(body, tail*))
+
 extension (binding: Binding)
   infix def in(expr: Expr): Expr.Bind =
     Bind(binding, expr)

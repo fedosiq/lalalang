@@ -2,7 +2,7 @@ package lalalang
 package lib.interpreters
 
 import lalalang.examples.functions.*
-import lalalang.examples.functions.bool.*
+import lalalang.examples.church.booleans.*
 import lalalang.lib.expr.Expr.*
 import lalalang.lib.expr.dsl.{add, lit}
 import lalalang.lib.expr.{BuiltinFn, ComparisonFn, Expr}

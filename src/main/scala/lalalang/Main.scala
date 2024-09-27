@@ -2,7 +2,6 @@ package lalalang
 
 import cats.effect.{IO, IOApp}
 import cats.syntax.all.*
-import lalalang.examples.functions.*
 import lalalang.lib.expr.Expr
 import lalalang.lib.expr.Expr.*
 import lalalang.lib.expr.dsl.*

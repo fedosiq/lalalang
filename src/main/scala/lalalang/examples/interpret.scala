@@ -27,7 +27,7 @@ def evalPrint[T: Show](evalFn: Expr => T, debug: Boolean)(expr: Expr): Unit =
 
 @main def reduceTest: Unit =
   import functions.*
-  import functions.bool.*
+  import church.booleans.*
 
   // println(s"T = ${t.show}")
   // println(s"F = ${f.show}")
