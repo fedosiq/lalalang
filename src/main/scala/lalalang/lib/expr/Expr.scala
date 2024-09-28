@@ -18,7 +18,7 @@ object Expr:
   def asInt(expr: Expr): Int =
     expr match
       case Lit(a) => a
-      case other  => throw new Exception(s"expected a literal, got $other")
+      case other  => throw Exception(s"expected a literal, got $other")
 
   given Show[Expr] =
     case Var(name)           => name

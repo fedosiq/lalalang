@@ -2,27 +2,67 @@ package lalalang
 package examples
 package church
 
+import lalalang.lib.expr.Expr
 import lalalang.lib.expr.Expr.*
-import lalalang.lib.expr.dsl.lambda2
+import lalalang.lib.expr.dsl.{lambda2, lambdaN, app}
 
 object booleans {
-  def t = lambda2(("t", "f"), body = Var("t"))
-  def f = Abs("t", Abs("f", body = Var("f")))
+  val t = lambda2(("t", "f"), body = Var("t"))
+  val f = Abs("t", Abs("f", body = Var("f")))
 
-  def and =
+  val and =
     lambda2(
       ("p", "q"),
       App(App(Var("p"), Var("q")), Var("p"))
     )
 
-  def andtf = App(App(and, t), f)
+  val andtf = App(App(and, t), f)
 
-  def andt = App(and, t)
+  val andt = App(and, t)
 
-  def tf  = App(t, f)
-  def tft = App(tf, t)
+  val tf  = App(t, f)
+  val tft = App(tf, t)
 }
 
 object numerals {
-  ???
+  val zero = lambda2(("f", "x"), Var("x"))
+  val one  = lambda2(("f", "x"), app("f", "x"))
+  val two  = lambda2(("f", "x"), app("f", app("f", "x")))
+
+  /** Constructs normalized n-th Church numeral
+    */
+  def n(n: Int): Expr = {
+    require(n >= 0, "Expected a non-negative number")
+
+    val body = (0 until n).map(_ => Var("f")).foldRight(Var("x"))((f, acc) => App(f, acc))
+    lambda2(("f", "x"), body)
+  }
+
+  def succ(num: Expr): Expr =
+    App(
+      lambdaN("n", "f", "x")(
+        app("f", app(app("n", "f"), "x"))
+      ),
+      num
+    )
+
+  def succ_(num: Expr): Expr =
+    App(
+      lambdaN("n", "f", "x")(
+        App(app("n", "f"), app("f", "x"))
+      ),
+      num
+    )
+
+  def plus(m: Expr, n: Expr): Expr =
+    App(
+      App(
+        lambdaN("m", "n", "f", "x")(
+          App(app("m", "f"), app(app("n", "f"), "x"))
+        ),
+        n
+      ),
+      m
+    )
+
 }

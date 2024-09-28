@@ -23,7 +23,11 @@ val lt = mkComparison(ComparisonFn.Lt)
 val gt = mkComparison(ComparisonFn.Gt)
 val eq = mkComparison(ComparisonFn.Eq)
 
-def lit: Int => Expr.Lit = Lit(_)
+val lit: Int => Expr.Lit = Lit(_)
+
+def app(varName: String, argName: String) = App(Var(varName), Var(argName))
+def app(varName: String, arg: Expr)       = App(Var(varName), arg)
+def app(body: Expr, arg: String)          = App(body, Var(arg))
 
 def rec(name: VarName, bindingBody: Expr): Binding =
   Binding(recursive = true, name, bindingBody)
@@ -46,11 +50,11 @@ def lambda2(variables: (String, String), body: Expr): Expr = {
   // lambdaN(body, a :: b :: Nil)
 }
 
-private def lambdaN(body: Expr, variables: String*): Expr =
-  variables match
-    case Nil          => throw new Exception("cannot construct lambda for empty arg list")
+def lambdaN(variables: String*)(body: Expr): Expr =
+  variables.toList match
+    case Nil          => throw Exception("cannot construct lambda for empty arg list")
     case head :: Nil  => Abs(head, body)
-    case head :: tail => Abs(head, lambdaN(body, tail*))
+    case head :: tail => Abs(head, lambdaN(tail*)(body))
 
 extension (binding: Binding)
   infix def in(expr: Expr): Expr.Bind =
