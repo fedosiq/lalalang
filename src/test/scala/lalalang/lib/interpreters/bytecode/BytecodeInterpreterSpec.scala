@@ -24,7 +24,7 @@ class BytecodeInterpreterSpec extends FunSuite:
   test("Lambdas") {
     val expr =
       let("f" -> lambda2(("a", "b"), Var("a") * Var("b")))
-        .in(App(App(Var("f"), 11), 3))
+        .in(App(app("f", 11), 3))
 
     assertEquals(Bytecode.eval(expr), VM.Value.Integer(33))
   }

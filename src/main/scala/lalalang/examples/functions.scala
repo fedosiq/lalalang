@@ -8,10 +8,10 @@ import lalalang.lib.expr.Expr.*
 import lalalang.lib.expr.*
 import lalalang.lib.expr.dsl.*
 
-def twoTimesTwo    = mul(lit(2), lit(2))
-def twoPlus3Times4 = add(lit(2), mul(lit(3), lit(4)))
+val twoTimesTwo    = mul(lit(2), lit(2))
+val twoPlus3Times4 = add(lit(2), mul(lit(3), lit(4)))
 
-def inc: Expr = Abs(
+val inc: Expr = Abs(
   variable = "x",
   body = Builtin(Arithmetic(Add, Var("x"), Lit(1)))
 )
@@ -28,7 +28,7 @@ def identityApply(n: Int): Expr =
   )
 
 // will recurse forever in case of eager arg evaluation
-def lazyFixpoint = {
+val lazyFixpoint = {
   val xx = App(Var("x"), Var("x"))
 
   val inner =
@@ -40,7 +40,7 @@ def lazyFixpoint = {
   Abs("f", App(inner, inner))
 }
 
-def eagerFixpoint = {
+val eagerFixpoint = {
   val xx          = App(Var("x"), Var("x"))
   val indirection = Abs("v", App(xx, Var("v")))
 
@@ -53,7 +53,7 @@ def eagerFixpoint = {
   Abs("f", App(inner, inner))
 }
 
-val fibStep = {
+val fibStep: Expr = {
   def xMinus(n: Int) = Builtin(
     Arithmetic(ArithmeticFn.Sub, Var("x"), Lit(n))
   )
@@ -79,11 +79,11 @@ val fibStep = {
   )
 }
 
-val fibStepDsl = {
+val fibStepDsl: Expr = {
   def xMinus(n: Int) = Var("x") - Lit(n)
 
   val falseBranch =
-    App(Var("f"), xMinus(1)) + App(Var("f"), xMinus(2))
+    app("f", xMinus(1)) + app("f", xMinus(2))
 
   lambda2(
     ("f", "x"),
@@ -132,7 +132,7 @@ def fibDirect(n: Int) = {
 }
 
 def fact(n: Int): Expr =
-  App(Var("fact"), lit(n))
+  app("fact", lit(n))
     .where(
       rec(
         "fact",
@@ -141,10 +141,10 @@ def fact(n: Int): Expr =
           Cond(
             pred = lt(Var("x"), lit(1)),
             trueBranch = lit(1),
-            falseBranch = App(Var("fact"), Var("x") - lit(1)) * Var("x")
+            falseBranch = app("fact", Var("x") - lit(1)) * Var("x")
           )
         )
       )
     )
 
-def diverging = rec("x", Var("x") + lit(1)).in(Var("x"))
+val diverging = rec("x", Var("x") + lit(1)).in(Var("x"))

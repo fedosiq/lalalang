@@ -52,7 +52,7 @@ class TreeInterpreterSpec extends FunSuite:
     assert(eval(expr) == Lit(0))
   }
 
-  test("Should calculate fibonacci") {
+  test("Fibonacci") {
     val testCases = List(1 -> 1, 2 -> 2, 3 -> 3, 4 -> 5, 5 -> 8, 10 -> 89)
     testCases
       .foreach { (in, expected) =>
