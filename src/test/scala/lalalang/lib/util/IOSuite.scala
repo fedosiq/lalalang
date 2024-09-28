@@ -1,6 +1,7 @@
 package lalalang.lib.util
 
 import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import munit.{FunSuite, Location}
 
 trait IOSuite:

@@ -2,6 +2,7 @@ package lalalang.lib.expr
 
 import lalalang.examples.church.numerals
 import lalalang.lib.interpreters.TreeInterpreter
+
 import scala.annotation.tailrec
 
 class ExprSpec extends munit.FunSuite:

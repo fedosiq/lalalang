@@ -1,8 +1,7 @@
 package lalalang.lib.interpreters
 
 import cats.Monad
-import cats.effect.Sync
-import cats.effect.concurrent.Ref
+import cats.effect.{Ref, Sync}
 import cats.syntax.all.*
 import lalalang.lib.Show.instances.given
 import lalalang.lib.expr.BuiltinFn.*

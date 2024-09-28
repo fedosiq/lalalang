@@ -1,8 +1,8 @@
 package lalalang
 package lib
 
-import lalalang.examples.functions.*
 import lalalang.examples.church.booleans.andtf
+import lalalang.examples.functions.*
 import lalalang.lib.expr.Expr.*
 import lalalang.lib.expr.dsl.*
 import lalalang.lib.expr.dsl.Conversions.given

@@ -1,6 +1,7 @@
 package lalalang.examples
 
 import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import lalalang.lib.expr.Expr
 import lalalang.lib.interpreters.TreeInterpreter.Error
 import lalalang.lib.interpreters.{EnvInterpreter, TreeInterpreter}
@@ -31,7 +32,7 @@ def reduceExample(expr: Expr): Unit =
   // val (res, time1)        = timed(SubstituteTreeInterpreter.eval(expr))
   // val (envEvalRes, time2) = timed(EnvInterpreter.eval(Map.empty)(expr))
   val res        = TreeInterpreter.eval[Either[Error, *]](expr).toOption.get
-  val envEvalRes = EnvInterpreter[IO](debug = false).initEval(Map.empty)(expr).unsafeRunSync
+  val envEvalRes = EnvInterpreter[IO](debug = false).initEval(Map.empty)(expr).unsafeRunSync()
 
   // println(s"[${time1}ms] inner repr of substitution result:")
   pprint.pprintln(res)

@@ -2,8 +2,8 @@ package lalalang.lib.interpreters
 
 import cats.effect.IO
 import lalalang.examples.functions.*
-import lalalang.lib.expr.dsl.*
 import lalalang.lib.expr.Expr
+import lalalang.lib.expr.dsl.*
 import lalalang.lib.interpreters.TreeInterpreter.Error
 import munit.{FunSuite, ScalaCheckSuite}
 import org.scalacheck.Prop.*

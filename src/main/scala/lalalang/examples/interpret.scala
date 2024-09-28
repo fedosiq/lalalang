@@ -1,16 +1,17 @@
 package lalalang.examples
 
 import cats.effect.IO
-import lalalang.lib.Show.instances.given
+import cats.effect.unsafe.implicits.global
 import lalalang.lib.*
+import lalalang.lib.Show.instances.given
 import lalalang.lib.expr.Expr
-import lalalang.lib.interpreters.TreeInterpreter.Error
+import lalalang.lib.expr.dsl.*
 import lalalang.lib.interpreters.*
+import lalalang.lib.interpreters.TreeInterpreter.Error
 import lalalang.lib.interpreters.bytecode.{Bytecode, VM}
 import lalalang.lib.util.timed
 
 import scala.util.{Failure, Success, Try}
-import lalalang.lib.expr.dsl.*
 
 def evalPrint[T: Show](evalFn: Expr => T, debug: Boolean)(expr: Expr): Unit =
   if (debug)
@@ -63,7 +64,7 @@ def evalPrint[T: Show](evalFn: Expr => T, debug: Boolean)(expr: Expr): Unit =
       debug = false
     ),
     "env tree interpreter" -> evalPrint[EnvInterpreter.Value[IO]](
-      e => envInterpreter.initEval(Map.empty)(e).unsafeRunSync,
+      e => envInterpreter.initEval(Map.empty)(e).unsafeRunSync(),
       debug = false
     ),
     "bytecode interpreter" -> evalPrint[VM.Value](Bytecode.eval, debug = false)

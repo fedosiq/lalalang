@@ -31,12 +31,12 @@ lazy val root = project
       "-Xkind-projector"
     ),
     libraryDependencies ++= Seq(
-      // "org.typelevel"     %% "cats-mtl"         % "1.4.0",
-      // "org.typelevel"     %% "cats-effect"      % "3.5.4",
+      "org.typelevel"     %% "cats-mtl"         % "1.5.0",
+      "org.typelevel"     %% "cats-effect"      % "3.5.4",
       "com.github.j-mie6" %% "parsley"          % "5.0.0-M6",
-      "com.lihaoyi"       %% "pprint"           % "0.8.1",
-      "tf.tofu"           %% "tofu"             % "0.12.1" cross CrossVersion.for3Use2_13,
-      "org.scalameta"     %% "munit"            % "1.0.0" % Test,
+      "com.lihaoyi"       %% "pprint"           % "0.9.0",
+      "tf.tofu"           %% "tofu-kernel"      % "0.13.6",
+      "org.scalameta"     %% "munit"            % "1.0.2" % Test,
       "org.scalameta"     %% "munit-scalacheck" % "1.0.0" % Test
     )
   )

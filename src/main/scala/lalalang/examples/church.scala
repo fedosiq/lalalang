@@ -4,7 +4,7 @@ package church
 
 import lalalang.lib.expr.Expr
 import lalalang.lib.expr.Expr.*
-import lalalang.lib.expr.dsl.{lambda2, lambdaN, app}
+import lalalang.lib.expr.dsl.{app, lambda2, lambdaN}
 
 object booleans {
   val t = lambda2(("t", "f"), body = Var("t"))

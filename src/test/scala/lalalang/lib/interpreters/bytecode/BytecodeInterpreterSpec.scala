@@ -1,10 +1,10 @@
 package lalalang.lib.interpreters.bytecode
 
-import lalalang.examples.functions.{twoPlus3Times4}
+import lalalang.examples.functions.twoPlus3Times4
 import lalalang.lib.expr.Expr
 import lalalang.lib.expr.Expr.{App, Var}
-import lalalang.lib.expr.dsl.{lambda2, let, add, *}
 import lalalang.lib.expr.dsl.Conversions.given Conversion[Int, Expr.Lit]
+import lalalang.lib.expr.dsl.{add, lambda2, let, *}
 import munit.FunSuite
 
 class BytecodeInterpreterSpec extends FunSuite:

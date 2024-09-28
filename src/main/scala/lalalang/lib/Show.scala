@@ -1,9 +1,9 @@
 package lalalang.lib
 
-import lalalang.lib.interpreters.bytecode.VM.{Value as VMValue}
 import lalalang.lib.expr.Expr
-import lalalang.lib.interpreters.EnvInterpreter.Value
 import lalalang.lib.interpreters.EnvInterpreter
+import lalalang.lib.interpreters.EnvInterpreter.Value
+import lalalang.lib.interpreters.bytecode.VM.Value as VMValue
 
 trait Show[-T]:
   extension (t: T) def show: String

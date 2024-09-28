@@ -4,8 +4,7 @@ package util
 
 import cats.Monad
 import cats.data.StateT
-import cats.effect.Sync
-import cats.effect.concurrent.Ref
+import cats.effect.{Ref, Sync}
 import cats.syntax.all.*
 import lalalang.lib.expr.Expr
 

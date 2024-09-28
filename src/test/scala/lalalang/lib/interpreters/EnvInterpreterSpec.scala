@@ -5,8 +5,8 @@ import cats.syntax.all.*
 import lalalang.examples.functions.{diverging, fact, fibDirect}
 import lalalang.lib.expr.Expr
 import lalalang.lib.interpreters.EnvInterpreter.{Err, Value}
-import munit.FunSuite
 import lalalang.lib.util.IOSuite
+import munit.FunSuite
 
 class EnvInterpreterSpec extends FunSuite with IOSuite:
   val interpreter =
