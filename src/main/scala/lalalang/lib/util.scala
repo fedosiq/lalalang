@@ -41,12 +41,20 @@ def timed[A](a: => A): (A, Long) = {
 def cloneMap[F[_]: Sync, A, B](ref: Ref[F, A], f: A => B): F[Ref[F, B]] =
   ref.get.map(f).flatMap(Ref.of)
 
-type Get[S, A] = S => A
-type Set[S, A] = A => S => S
+type Get[S, A]           = S => A
+type PSet[B, S, T]       = B => S => T
+type PUpdate[S, T, A, B] = S => (A => B) => T
 
-trait Lens[S, A]:
+trait PLens[-S, +T, +A, -B]:
   def get: Get[S, A]
-  def set: Set[S, A]
+  def set: PSet[B, S, T]
+  def update: PUpdate[S, T, A, B] = // haven't check this yet
+    s => fab => set(fab(get(s)))(s)
+
+type Set[S, A]    = PSet[A, S, S]
+type Update[S, A] = PUpdate[S, A, A, S]
+
+type Lens[S, A] = PLens[S, S, A, A]
 
 object Lens:
   def instance[S, A](_get: S => A, _set: A => S => S): Lens[S, A] =

@@ -16,14 +16,13 @@ type BytecodeChunks = Vector[Vector[Instr]]
 case class State(
     chunks: BytecodeChunks,
     constPool: ConstPool,
-    labelPool: LabelPool, // unused?
     mappings: LabelManager.Mappings,
     labelMapping: Map[LabelNum, ChunkNum]
 )
 
 object State {
   def empty: State =
-    State(Vector.empty[Vector[Instr]], ConstPool.empty, LabelPool.empty, LabelManager.Mappings(), Map.empty)
+    State(Vector.empty[Vector[Instr]], ConstPool.empty, LabelManager.Mappings(), Map.empty)
 
   given Lens[State, ConstPool] = Lens.instance(
     _.constPool,
@@ -35,8 +34,6 @@ object State {
     newMappings => _.copy(mappings = newMappings)
   )
 }
-
-type BytecodeState[F[_]] = Stateful[F, State]
 
 case class Bytecode(instr: Vector[Instr], labelOffsets: Vector[Int])
 
@@ -98,34 +95,22 @@ object ConstPool:
     yield newNum
 end ConstPool
 
-// todo: remove? seems unneeded
-opaque type LabelPool = Pool
-object LabelPool:
-  def empty: LabelPool = Pool.empty
-
-  def add[F[_]: Monad](label: String)(using S: Stateful[F, State]): F[LabelNum] =
-    for
-      pool <- S.inspect[Pool](_.labelPool)
-      (newNum, newPool) = pool.add(label)
-      _ <- S.modify(_.copy(labelPool = newPool))
-    yield newNum
-end LabelPool
+type BytecodeState[F[_]] = Stateful[F, State]
 
 /** Emits bytecode for stack-based VM.
   */
 class BytecodeBuilder[F[_]: BytecodeState: Monad](labelManager: LabelManagerAlg[F]):
-  def emit(chunk: ChunkNum, instr: Instr): F[Unit] =
+  private def updateChunks(f: BytecodeChunks => BytecodeChunks) =
     Stateful[F, State].modify { state =>
+      state.copy(chunks = f(state.chunks))
+    }
 
-      val existing = state.chunks.lift(chunk)
-      val newChunks = existing match
-        case None =>
-          state.chunks :+ Vector(instr)
-
+  def emit(chunk: ChunkNum, instr: Instr): F[Unit] =
+    updateChunks { chunks =>
+      chunks.lift(chunk) match
+        case None => chunks :+ Vector(instr)
         case Some(vec) =>
-          state.chunks.updated(chunk, vec.appended(instr))
-
-      state.copy(chunks = newChunks)
+          chunks.updated(chunk, vec.appended(instr))
     }
 
   def allocNamedChunk(name: String): F[NamedChunk] =
