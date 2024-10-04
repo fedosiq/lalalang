@@ -8,8 +8,16 @@ import scala.annotation.tailrec
 class ExprSpec extends munit.FunSuite:
   import numerals.*
 
-  def eval(expr: Expr)   = TreeInterpreter.eval[Either[TreeInterpreter.Error, *]](expr).fold(throw _, identity)
-  def reduce(expr: Expr) = TreeInterpreter.reduce[Either[TreeInterpreter.Error, *]](expr).fold(throw _, identity)
+  def eval(expr: Expr): Expr =
+    TreeInterpreter
+      .eval[Either[TreeInterpreter.Error, *]](expr)
+      .fold(throw _, identity)
+
+  def reduce(expr: Expr): Expr =
+    TreeInterpreter
+      .reduce[Either[TreeInterpreter.Error, *]](expr)
+      .fold(throw _, identity)
+
   val calc: Expr => Expr = reduce compose eval
 
   test("Numerals") {

@@ -78,7 +78,7 @@ trait FunctorK[Alg[_[_]]]:
   def mapK[F[_], G[_]](alg: Alg[F])(f: F ~> G): Alg[G]
 
 object FunctorK:
-  def apply[Alg[_[_]]: FunctorK] = summon[FunctorK[Alg]]
+  def apply[Alg[_[_]]: FunctorK]: FunctorK[Alg] = summon[FunctorK[Alg]]
 
   object syntax:
     extension [Alg[F[_]]: FunctorK, F[_]](alg: Alg[F])

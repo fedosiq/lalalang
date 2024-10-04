@@ -118,23 +118,23 @@ class LCParser:
 object LCParser:
   private val lambdaChars = Set('λ', '\\')
 
-  val Lam  = oneOf(lambdaChars)
-  val Dot  = char('.')
-  val If   = string("if")
-  val Else = string("else")
-  val Let  = string("let")
-  val Rec  = string("rec")
-  val Bind = string(":=")
-  val In   = string("in")
-  val Eof  = eof
+  val Lam: Parsley[Char]    = oneOf(lambdaChars)
+  val Dot: Parsley[Char]    = char('.')
+  val If: Parsley[String]   = string("if")
+  val Else: Parsley[String] = string("else")
+  val Let: Parsley[String]  = string("let")
+  val Rec: Parsley[String]  = string("rec")
+  val Bind: Parsley[String] = string(":=")
+  val In: Parsley[String]   = string("in")
+  val Eof                   = eof
 
-  val arithmeticOp =
+  val arithmeticOp: Parsley[ArithmeticFn] =
     char('+') #> ArithmeticFn.Add
       | char('-') #> ArithmeticFn.Sub
       | char('*') #> ArithmeticFn.Mul
       | char('/') #> ArithmeticFn.Div
 
-  val comparisonOp =
+  val comparisonOp: Parsley[ComparisonFn] =
     char('>') #> ComparisonFn.Gt
       | char('<') #> ComparisonFn.Lt
       | string("==") #> ComparisonFn.Eq

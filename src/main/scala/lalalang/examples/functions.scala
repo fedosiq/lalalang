@@ -2,10 +2,10 @@ package lalalang
 package examples
 package functions
 
+import lalalang.lib.expr.*
 import lalalang.lib.expr.ArithmeticFn.*
 import lalalang.lib.expr.BuiltinFn.*
 import lalalang.lib.expr.Expr.*
-import lalalang.lib.expr.*
 import lalalang.lib.expr.dsl.*
 
 val twoTimesTwo    = mul(lit(2), lit(2))

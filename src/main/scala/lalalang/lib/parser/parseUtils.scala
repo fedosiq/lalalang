@@ -4,15 +4,15 @@ import parsley.Parsley
 import parsley.character.char
 
 object parseUtils:
-  def between[T](ch1: Char, ch2: Char)(p: => Parsley[T]) =
+  def between[T](ch1: Char, ch2: Char)(p: => Parsley[T]): Parsley[T] =
     char(ch1) *> p <* char(ch2)
 
-  def surrounded[T](ch: Char)(p: => Parsley[T]) =
+  def surrounded[T](ch: Char)(p: => Parsley[T]): Parsley[T] =
     between(ch, ch)(p)
 
-  def parens[T]   = between[T]('(', ')')
-  def brackets[T] = between[T]('{', '}')
-  def spaced[T]   = surrounded[T](' ')
+  def parens[T]: (=> Parsley[T]) => Parsley[T]   = between[T]('(', ')')
+  def brackets[T]: (=> Parsley[T]) => Parsley[T] = between[T]('{', '}')
+  def spaced[T]: (=> Parsley[T]) => Parsley[T]   = surrounded[T](' ')
 
   // ((M N) O) P
   // adapted from haskell's parsec

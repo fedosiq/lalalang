@@ -1,6 +1,5 @@
 package lalalang.lib.interpreters
 
-import cats.effect.IO
 import lalalang.examples.functions.*
 import lalalang.lib.expr.Expr
 import lalalang.lib.expr.dsl.*
@@ -10,14 +9,8 @@ import org.scalacheck.Prop.*
 
 class ExprProperties extends FunSuite with ScalaCheckSuite:
 
-  def eval(e: Expr): Expr =
+  private def eval(e: Expr) =
     TreeInterpreter.eval[Either[Error, *]](e).toOption.get
-
-  val envInterpreter =
-    EnvInterpreter[IO](debug = false)
-
-  def eval2(e: Expr) =
-    envInterpreter.initEval(Map.empty)(e)
 
   property("Literal reduces to literal") {
     forAll { (n: Int) =>

@@ -10,7 +10,7 @@ import lalalang.lib.interpreters.TreeInterpreter.Error
 import munit.FunSuite
 
 class TreeInterpreterSpec extends FunSuite:
-  def evalEither(e: Expr) =
+  def evalEither(e: Expr): Either[Error, Expr] =
     TreeInterpreter.eval[Either[Error, *]](e)
 
   def eval(e: Expr): Expr =

@@ -9,10 +9,9 @@ import lalalang.lib.util.IOSuite
 import munit.FunSuite
 
 class EnvInterpreterSpec extends FunSuite with IOSuite:
-  val interpreter =
-    EnvInterpreter[IO](debug = false)
+  private val interpreter = EnvInterpreter[IO](debug = false)
 
-  def eval = interpreter.initEval(Map.empty)
+  private val eval: Expr => IO[Value[IO]] = interpreter.initEval(Map.empty)
 
   testIO("factorial") {
     val testCases = List(

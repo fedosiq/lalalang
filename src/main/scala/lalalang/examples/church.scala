@@ -7,27 +7,27 @@ import lalalang.lib.expr.Expr.*
 import lalalang.lib.expr.dsl.{app, lambda2, lambdaN}
 
 object booleans {
-  val t = lambda2(("t", "f"), body = Var("t"))
-  val f = Abs("t", Abs("f", body = Var("f")))
+  val t: Expr = lambda2(("t", "f"), body = Var("t"))
+  val f: Expr = Abs("t", Abs("f", body = Var("f")))
 
-  val and =
+  val and: Expr =
     lambda2(
       ("p", "q"),
       App(App(Var("p"), Var("q")), Var("p"))
     )
 
-  val andtf = App(App(and, t), f)
+  val andtf: Expr = App(App(and, t), f)
 
-  val andt = App(and, t)
+  val andt: Expr = App(and, t)
 
-  val tf  = App(t, f)
-  val tft = App(tf, t)
+  val tf: Expr  = App(t, f)
+  val tft: Expr = App(tf, t)
 }
 
 object numerals {
-  val zero = lambda2(("f", "x"), Var("x"))
-  val one  = lambda2(("f", "x"), app("f", "x"))
-  val two  = lambda2(("f", "x"), app("f", app("f", "x")))
+  val zero: Expr = lambda2(("f", "x"), Var("x"))
+  val one: Expr  = lambda2(("f", "x"), app("f", "x"))
+  val two: Expr  = lambda2(("f", "x"), app("f", app("f", "x")))
 
   /** Constructs normalized n-th Church numeral
     */
@@ -65,4 +65,6 @@ object numerals {
       m
     )
 
+  def mul(m: Expr, n: Expr): Expr =
+    ???
 }

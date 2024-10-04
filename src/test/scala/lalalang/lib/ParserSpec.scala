@@ -11,7 +11,7 @@ import lalalang.lib.parser.LCParser
 
 class ParserSpec extends munit.FunSuite:
 
-  val parser = LCParser()
+  private val parser = LCParser()
 
   inline def testParser(input: String, expected: Expr): Unit =
     parser

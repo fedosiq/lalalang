@@ -143,7 +143,6 @@ class BytecodeBuilder[F[_]: BytecodeState: Monad](labelManager: LabelManagerAlg[
 
       Bytecode(flatBytecode, offsets)
     }
-  end build
 
   def generate(chunkNum: ChunkNum, expr: Expr): F[Unit] =
     val emitCur     = emit(chunkNum, _)
