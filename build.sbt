@@ -1,4 +1,4 @@
-val scala3Version = "3.5.2-RC1"
+val scala3Version = "3.6.3-RC1"
 
 lazy val root = project
   .in(file("."))
@@ -17,8 +17,8 @@ lazy val root = project
       "-deprecation",
       "-unchecked",
       // "-rewrite",
-      "-source",
-      "future",
+      // "-source",
+      // "future",
       // "-language",
       // "experimental.modularity",
       // "-Vprofile",
