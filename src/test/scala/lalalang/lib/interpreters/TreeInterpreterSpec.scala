@@ -11,7 +11,7 @@ import munit.FunSuite
 
 class TreeInterpreterSpec extends FunSuite:
   def evalEither(e: Expr): Either[Error, Expr] =
-    TreeInterpreter.eval[Either[Error, *]](e)
+    TreeInterpreter[Either[Error, *]].eval(e)
 
   def eval(e: Expr): Expr =
     evalEither(e).toOption.get

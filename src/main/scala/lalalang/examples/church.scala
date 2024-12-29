@@ -38,6 +38,11 @@ object numerals {
     lambda2(("f", "x"), body)
   }
 
+  def succLam: Expr =
+    lambdaN("n", "f", "x")(
+      App(app("n", "f"), app("f", "x"))
+    )
+
   def succ(num: Expr): Expr =
     App(
       lambdaN("n", "f", "x")(
@@ -47,24 +52,31 @@ object numerals {
     )
 
   def succ_(num: Expr): Expr =
-    App(
-      lambdaN("n", "f", "x")(
-        App(app("n", "f"), app("f", "x"))
-      ),
-      num
+    App(succLam, num)
+
+  def add(m: Expr, n: Expr): Expr =
+    val lam = lambdaN("m", "n", "f", "x")(
+      App(
+        app("m", "f"),
+        app(app("n", "f"), "x")
+      )
     )
 
-  def plus(m: Expr, n: Expr): Expr =
-    App(
-      App(
-        lambdaN("m", "n", "f", "x")(
-          App(app("m", "f"), app(app("n", "f"), "x"))
-        ),
-        n
-      ),
-      m
+    App(App(lam, m), n)
+
+  def add_(m: Expr, n: Expr): Expr =
+    val lam = lambdaN("m", "n")(
+      App(app("m", succLam), Var("n"))
     )
+    App(App(lam, m), n)
 
   def mul(m: Expr, n: Expr): Expr =
-    ???
+    val lam = lambdaN("a", "b", "f")(
+      app("a", app("b", "f"))
+    )
+    App(App(lam, m), n)
+
+  def pow(a: Expr, b: Expr): Expr =
+    val lam = lambdaN("a", "b")(app("b", "a"))
+    App(App(lam, a), b)
 }

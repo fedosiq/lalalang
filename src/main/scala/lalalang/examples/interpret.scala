@@ -60,7 +60,7 @@ def evalPrint[T: Show](evalFn: Expr => T, debug: Boolean)(expr: Expr): Unit =
 
   val interpreters = List(
     "substitutional tree interpreter" -> evalPrint[Expr](
-      e => TreeInterpreter.eval[Either[Error, *]](e).toOption.get,
+      e => TreeInterpreter[Either[Error, *]].eval(e).toOption.get,
       debug = false
     ),
     "env tree interpreter" -> evalPrint[EnvInterpreter.Value[IO]](

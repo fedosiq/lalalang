@@ -1,5 +1,7 @@
 val scala3Version = "3.6.3-RC1"
 
+Compile / run / fork := true
+
 lazy val root = project
   .in(file("."))
   .settings(
@@ -32,7 +34,7 @@ lazy val root = project
     ),
     libraryDependencies ++= Seq(
       "org.typelevel"     %% "cats-mtl"         % "1.5.0",
-      "org.typelevel"     %% "cats-effect"      % "3.5.4",
+      "org.typelevel"     %% "cats-effect"      % "3.6.0-RC1",
       "com.github.j-mie6" %% "parsley"          % "5.0.0-M6",
       "com.lihaoyi"       %% "pprint"           % "0.9.0",
       "tf.tofu"           %% "tofu-kernel"      % "0.13.6",

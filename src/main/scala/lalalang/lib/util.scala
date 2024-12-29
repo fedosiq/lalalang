@@ -81,5 +81,5 @@ object FunctorK:
   def apply[Alg[_[_]]: FunctorK]: FunctorK[Alg] = summon[FunctorK[Alg]]
 
   object syntax:
-    extension [Alg[F[_]]: FunctorK, F[_]](alg: Alg[F])
+    extension [Alg[_[_]]: FunctorK, F[_]](alg: Alg[F])
       def mapK[G[_]](using f: F ~> G): Alg[G] = FunctorK[Alg].mapK(alg)(f)

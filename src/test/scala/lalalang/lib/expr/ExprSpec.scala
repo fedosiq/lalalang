@@ -8,14 +8,16 @@ import scala.annotation.tailrec
 class ExprSpec extends munit.FunSuite:
   import numerals.*
 
+  val interpreter = TreeInterpreter[Either[TreeInterpreter.Error, *]]
+
   def eval(expr: Expr): Expr =
-    TreeInterpreter
-      .eval[Either[TreeInterpreter.Error, *]](expr)
+    interpreter
+      .eval(expr)
       .fold(throw _, identity)
 
   def reduce(expr: Expr): Expr =
-    TreeInterpreter
-      .reduce[Either[TreeInterpreter.Error, *]](expr)
+    interpreter
+      .reduce(expr)
       .fold(throw _, identity)
 
   val calc: Expr => Expr = reduce compose eval
@@ -34,19 +36,61 @@ class ExprSpec extends munit.FunSuite:
   test("Succ multiple applications") {
     // we cannot just write `succ(succ(one))` and expect it to be `succ(two)`,
     // we need to do `eval` in-between
+    // todo: check, is it even correct
     assertEquals(calc(succ(eval(succ(one)))), calc(succ(two)))
   }
 
   test("Succ equivalence") {
-    assertEquals(calc(succ(zero)), calc(succ_(zero)))
-    assertEquals(calc(succ(one)), calc(succ_(one)))
-    assertEquals(calc(succ(two)), calc(succ_(two)))
+    List(zero, one, two)
+      .map(x => calc(succ(x)) -> calc(succ_(x)))
+      .foreach(assertEquals(_, _))
   }
 
-  test("Plus") {
-    assertEquals(calc(plus(two, zero)), two)
-    assertEquals(calc(plus(two, one)), calc(succ(two)))
-    assertEquals(calc(plus(two, two)), n(4))
+  test("Add") {
+    assertEquals(calc(add(two, zero)), two)
+    assertEquals(calc(add(two, one)), calc(succ(two)))
+    assertEquals(calc(add(two, two)), n(4))
+  }
+
+  test("Add equivalence") {
+    assertEquals(calc(add(one, one)), calc(add_(one, one)))
+
+    assertEquals(calc(add(one, n(3))), calc(add_(one, n(3))))
+
+    assertEquals(calc(add(one, two)), calc(add_(one, two)))
+    assertEquals(calc(add(two, one)), calc(add_(one, two)))
+
+    // todo: need to deal with variable names
+    // assertEquals(calc(add(one, two)), calc(add_(two, one)))
+    // assertEquals(calc(add(two, one)), calc(add_(two, one)))
+    // assertEquals(calc(add(two, two)), calc(add_(two, two)))
+  }
+
+  test("Mul") {
+    val range = (1 to 4)
+
+    (for {
+      x <- range
+      y <- range
+    } yield x -> y)
+      .map((a, b) => assertEquals(calc(mul(n(a), n(b))), n(a * b)))
+
+  }
+
+  test("Pow") {
+    val range = (1 to 4)
+
+    (for {
+      x <- range
+      y <- range
+    } yield x -> y)
+      .map((a, b) =>
+        assertEquals(
+          calc(pow(n(a), interpreter.alpha(n(b), Map("f" -> "g", "x" -> "y")))),
+          interpreter.alpha(n(math.pow(a.toDouble, b.toDouble).toInt), Map("f" -> "y"))
+        )
+      )
+
   }
 
   test("Smoke") {
@@ -83,6 +127,6 @@ class ExprSpec extends munit.FunSuite:
 
     (0 until length)
       .map(x => x -> toChurch(x))
-      .map((x, ch) => n(x + x) -> calc(plus(ch, ch)))
+      .map((x, ch) => n(x + x) -> calc(add(ch, ch)))
       .foreach(assertEquals(_, _))
   }

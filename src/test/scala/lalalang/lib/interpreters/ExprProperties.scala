@@ -10,7 +10,7 @@ import org.scalacheck.Prop.*
 class ExprProperties extends FunSuite with ScalaCheckSuite:
 
   private def eval(e: Expr) =
-    TreeInterpreter.eval[Either[Error, *]](e).toOption.get
+    TreeInterpreter[Either[Error, *]].eval(e).toOption.get
 
   property("Literal reduces to literal") {
     forAll { (n: Int) =>

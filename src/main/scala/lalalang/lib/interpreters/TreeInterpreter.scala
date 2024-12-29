@@ -1,17 +1,20 @@
 package lalalang.lib.interpreters
 
 import cats.syntax.all.*
-import cats.{Applicative, Monad}
+import cats.Monad
 import lalalang.lib.expr.BuiltinFn.*
 import lalalang.lib.expr.Expr
 import lalalang.lib.expr.Expr.*
 import lalalang.lib.expr.model.VarName
 import tofu.syntax.raise.*
+import scala.annotation.tailrec
 
 /** Interprets expression by recursively substituting variables in the AST
   */
-object TreeInterpreter:
-  def eval[F[_]: Error.Raise: Monad](expr: Expr): F[Expr] = expr match
+class TreeInterpreter[F[_]: TreeInterpreter.Error.Raise: Monad]:
+  import TreeInterpreter.Error
+
+  def eval(expr: Expr): F[Expr] = expr match
     case v: Var   => v.pure
     case abs: Abs => abs.pure
     case lit: Lit => lit.pure
@@ -39,8 +42,12 @@ object TreeInterpreter:
   /** [[eval]] can't simplify expressions with top-level [[Expr.Abs]].
     *
     * This function traverses the expression tree and tries to simplify it where possible.
+    *
+    * TODO: tests
+    *
+    * TODO: check if expression is beta-normalized
     */
-  def reduce[F[_]: Error.Raise: Monad](expr: Expr): F[Expr] = expr match
+  def reduce(expr: Expr): F[Expr] = expr match
     case App(appBody, arg) =>
       reduce(appBody).flatMap {
         case Abs(v, lambdaBody) => substitute(v, arg)(lambdaBody) >>= reduce
@@ -55,7 +62,7 @@ object TreeInterpreter:
       // eval(other)
       other.pure
 
-  private def substitute[F[_]: Error.Raise: Applicative](target: VarName, replacement: Expr)(expr: Expr): F[Expr] =
+  private def substitute(target: VarName, replacement: Expr)(expr: Expr): F[Expr] =
     val subst = substitute(target, replacement)
 
     expr match
@@ -83,6 +90,28 @@ object TreeInterpreter:
       case _: Bind => Error.UnsupportedOp("binding").raise
   end substitute
 
+  /** Performs alpha-conversion
+    *
+    * fixme: non-tailrec
+    */
+  def alpha(expr: Expr, rename: Map[String, String]): Expr =
+    val _alpha                  = alpha(_, rename)
+    def tryRename(name: String) = rename.getOrElse(name, name)
+
+    expr match
+      case Var(name)                           => Var(tryRename(name))
+      case Abs(variable, body)                 => Abs(tryRename(variable), _alpha(body))
+      case App(expr, arg)                      => App(_alpha(expr), _alpha(arg))
+      case Lit(x)                              => Lit(x)
+      case Builtin(Arithmetic(f, a, b))        => Builtin(Arithmetic(f, _alpha(a), _alpha(b)))
+      case Builtin(Comparison(f, a, b))        => Builtin(Comparison(f, _alpha(a), _alpha(b)))
+      case Cond(pred, trueBranch, falseBranch) => Cond(_alpha(pred), _alpha(trueBranch), _alpha(falseBranch))
+      case Bind(binding, expr)                 => ???
+
+
+end TreeInterpreter
+
+object TreeInterpreter:
   enum Error(message: String) extends Exception(message):
     case UnsupportedOp(op: String) extends Error(s"${op} not supported in substitution based evaluation")
     case UnexpectedOp(received: Expr, expected: String) extends Error(s"Expected ${expected}, got $received")

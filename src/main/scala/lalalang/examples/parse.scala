@@ -32,7 +32,7 @@ def reduceExample(expr: Expr): Unit =
 
   // val (res, time1)        = timed(SubstituteTreeInterpreter.eval(expr))
   // val (envEvalRes, time2) = timed(EnvInterpreter.eval(Map.empty)(expr))
-  val res        = TreeInterpreter.eval[Either[Error, *]](expr)
+  val res        = TreeInterpreter[Either[Error, *]].eval(expr)
   val envEvalRes = EnvInterpreter[IO](debug = false).initEval(Map.empty)(expr).attempt.unsafeRunSync()
 
   // println(s"[${time1}ms] inner repr of substitution result:")
