@@ -65,8 +65,8 @@ object Lens:
 def lensMapState[F[_]: Monad, S, T, A](lens: Lens[S, T]): StateT[F, T, A] => StateT[F, S, A] =
   stateT =>
     StateT { s =>
-      for (res, a) <- stateT.run(lens.get(s))
-      yield (lens.set(res)(s), a)
+      for (res, t) <- stateT.run(lens.get(s))
+      yield (lens.set(res)(s), t)
     }
 
 type ~>[-F[_], +G[_]] = [A] => F[A] => G[A]

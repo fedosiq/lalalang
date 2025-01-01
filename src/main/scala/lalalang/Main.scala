@@ -29,7 +29,7 @@ object Main extends IOApp.Simple:
   val exprs: List[Expr] = List(expr, expr2, expr3, expr4)
 
   private def log[T](str: T): IO[Unit] =
-    IO(println(str))
+    IO.println(str)
 
   def envEval(expr: Expr): IO[Unit] =
     val interpreter = EnvInterpreter[IO](debug = false)

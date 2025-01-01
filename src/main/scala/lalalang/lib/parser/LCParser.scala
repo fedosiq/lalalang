@@ -13,6 +13,7 @@ import parsley.{Parsley, Result}
 
 import scala.annotation.nowarn
 
+// FIXME: `1 + 1` hangs the parser, lol
 class LCParser:
   import parseUtils.*
   import LCParser.*

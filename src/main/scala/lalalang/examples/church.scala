@@ -54,15 +54,15 @@ object numerals {
   def succ_(num: Expr): Expr =
     App(succLam, num)
 
-  def add(m: Expr, n: Expr): Expr =
-    val lam = lambdaN("m", "n", "f", "x")(
-      App(
-        app("m", "f"),
-        app(app("n", "f"), "x")
-      )
+  def addLam = lambdaN("m", "n", "f", "x")(
+    App(
+      app("m", "f"),
+      app(app("n", "f"), "x")
     )
+  )
 
-    App(App(lam, m), n)
+  def add(m: Expr, n: Expr): Expr =
+    App(App(addLam, m), n)
 
   def add_(m: Expr, n: Expr): Expr =
     val lam = lambdaN("m", "n")(

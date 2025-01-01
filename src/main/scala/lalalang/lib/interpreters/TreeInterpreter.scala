@@ -62,7 +62,7 @@ class TreeInterpreter[F[_]: TreeInterpreter.Error.Raise: Monad]:
       // eval(other)
       other.pure
 
-  private def substitute(target: VarName, replacement: Expr)(expr: Expr): F[Expr] =
+  def substitute(target: VarName, replacement: Expr)(expr: Expr): F[Expr] =
     val subst = substitute(target, replacement)
 
     expr match
@@ -90,9 +90,13 @@ class TreeInterpreter[F[_]: TreeInterpreter.Error.Raise: Monad]:
       case _: Bind => Error.UnsupportedOp("binding").raise
   end substitute
 
-  /** Performs alpha-conversion
+  /** Performs alpha-conversion.
+    *
+    * Difference from [[substitute]] is that [[substitute]] doesn't rename bound variables in Abs
     *
     * fixme: non-tailrec
+    *
+    * TODO: tests
     */
   def alpha(expr: Expr, rename: Map[String, String]): Expr =
     val _alpha                  = alpha(_, rename)
@@ -107,6 +111,39 @@ class TreeInterpreter[F[_]: TreeInterpreter.Error.Raise: Monad]:
       case Builtin(Comparison(f, a, b))        => Builtin(Comparison(f, _alpha(a), _alpha(b)))
       case Cond(pred, trueBranch, falseBranch) => Cond(_alpha(pred), _alpha(trueBranch), _alpha(falseBranch))
       case Bind(binding, expr)                 => ???
+
+  def tryPreprocess(expr: Expr, constants: Map[VarName, Expr]): F[Expr] =
+    val freeVars = findFreeVars(expr, constants.keySet)
+    freeVars match
+      case Nil => expr.pure
+      case Expr.Var(name) :: _ =>
+        substitute(name, constants(name))(expr)
+          >>= (tryPreprocess(_, constants))
+
+  def findFreeVars(expr: Expr, constants: Set[VarName], acc: List[Expr.Var] = List.empty): List[Expr.Var] =
+    def _find = findFreeVars(_, constants, acc)
+
+    expr match
+      case Expr.Lit(x) => acc
+      case v @ Expr.Var(name) =>
+        if (constants.contains(name))
+          v :: acc
+        else
+          acc
+      case Expr.Abs(boundName, body) =>
+        if (constants.contains(boundName))
+          findFreeVars(body, constants - boundName, acc)
+        else
+          _find(body)
+      case Expr.App(body, arg) =>
+        _find(body) ::: _find(arg)
+      case Expr.Builtin(Arithmetic(f, a, b)) =>
+        _find(a) ::: _find(b)
+      case Expr.Builtin(Comparison(f, a, b)) =>
+        _find(a) ::: _find(b)
+      case Expr.Cond(pred, trueBranch, falseBranch) =>
+        _find(pred) ::: _find(trueBranch) ::: _find(falseBranch)
+      case Expr.Bind(binding, expr) => ???
 
 
 end TreeInterpreter
