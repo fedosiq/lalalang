@@ -70,7 +70,7 @@ class LCParser:
       bindChars <- someTill(item, spaced(In))
       bindBody <- term.parse(bindChars.mkString) match
         case parsley.Success(a)   => pure(a)
-        case parsley.Failure(err) => fail("can't parse binding body")
+        case parsley.Failure(err) => fail(s"can't parse binding body: $err")
 
       inExpr <- term
     yield Expr.Bind(Binding(rec.getOrElse(false), name, bindBody), inExpr)

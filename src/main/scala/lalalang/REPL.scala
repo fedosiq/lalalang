@@ -14,12 +14,14 @@ import lalalang.lib.expr.model.VarName
 import lalalang.lib.interpreters.TreeInterpreter
 import lalalang.lib.parser.LCParser
 
+import scala.util.control.NoStackTrace
+
 class Repl[F[_]: MonadThrow: Console](
     parser: LCParser,
     interpreter: TreeInterpreter[Either[TreeInterpreter.Error, *]],
     constants: Ref[F, Map[VarName, Expr]]
 ):
-  import Repl.{Cmd, prompt, bindRgx}
+  import Repl.{Cmd, ParseError, prompt, bindRgx}
 
   def loop: F[Unit] =
     for
@@ -50,7 +52,7 @@ class Repl[F[_]: MonadThrow: Console](
     yield cmd
 
   private def parseExpr(rawExpr: String): F[Expr] =
-    parser.parse(rawExpr).toEither.leftMap(new RuntimeException(_)).liftTo[F]
+    parser.parse(rawExpr).toEither.leftMap(ParseError(_)).liftTo[F]
 
   private def save(name: VarName, rawExpr: String): F[Unit] =
     parseExpr(rawExpr)
@@ -96,6 +98,8 @@ object Repl:
   enum Cmd:
     case Interpret(expr: Expr)
     case Define(name: VarName, rawExpr: String)
+
+  case class ParseError(msg: String) extends Exception(msg) with NoStackTrace
 
   def mk[I[_]: Sync, F[_]: Sync: Console]: I[Repl[F]] =
     Ref

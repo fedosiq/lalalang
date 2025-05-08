@@ -124,7 +124,7 @@ object EnvInterpreter:
           case other     => Err.UnexpectedOp(other.toString, "literal").raise
         }
 
-    extension [F[_]: Monad: Err.Raise](v: Value[F])
+    extension [F[_]](v: Value[F])
       def notBlackHole: Boolean =
         v match
           case Value.BlackHole() => false

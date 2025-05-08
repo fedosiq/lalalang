@@ -1,4 +1,4 @@
-val scala3Version = "3.6.3-RC1"
+val scala3Version = "3.7.1-RC1"
 
 Compile / run / fork := true
 
@@ -34,11 +34,11 @@ lazy val root = project
     ),
     libraryDependencies ++= Seq(
       "org.typelevel"     %% "cats-mtl"         % "1.5.0",
-      "org.typelevel"     %% "cats-effect"      % "3.6.0-RC1",
-      "com.github.j-mie6" %% "parsley"          % "5.0.0-M6",
+      "org.typelevel"     %% "cats-effect"      % "3.6.1",
+      "com.github.j-mie6" %% "parsley"          % "5.0.0-M15",
       "com.lihaoyi"       %% "pprint"           % "0.9.0",
-      "tf.tofu"           %% "tofu-kernel"      % "0.13.6",
-      "org.scalameta"     %% "munit"            % "1.0.2" % Test,
-      "org.scalameta"     %% "munit-scalacheck" % "1.0.0" % Test
+      "tf.tofu"           %% "tofu-kernel"      % "0.13.7",
+      "org.scalameta"     %% "munit"            % "1.1.1" % Test,
+      "org.scalameta"     %% "munit-scalacheck" % "1.1.0" % Test
     )
   )

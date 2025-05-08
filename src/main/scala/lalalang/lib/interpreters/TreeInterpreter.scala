@@ -120,7 +120,7 @@ class TreeInterpreter[F[_]: TreeInterpreter.Error.Raise: Monad]:
         substitute(name, constants(name))(expr)
           >>= (tryPreprocess(_, constants))
 
-  def findFreeVars(expr: Expr, constants: Set[VarName], acc: List[Expr.Var] = List.empty): List[Expr.Var] =
+  private def findFreeVars(expr: Expr, constants: Set[VarName], acc: List[Expr.Var] = List.empty): List[Expr.Var] =
     def _find = findFreeVars(_, constants, acc)
 
     expr match
@@ -137,9 +137,9 @@ class TreeInterpreter[F[_]: TreeInterpreter.Error.Raise: Monad]:
           _find(body)
       case Expr.App(body, arg) =>
         _find(body) ::: _find(arg)
-      case Expr.Builtin(Arithmetic(f, a, b)) =>
+      case Expr.Builtin(Arithmetic(_, a, b)) =>
         _find(a) ::: _find(b)
-      case Expr.Builtin(Comparison(f, a, b)) =>
+      case Expr.Builtin(Comparison(_, a, b)) =>
         _find(a) ::: _find(b)
       case Expr.Cond(pred, trueBranch, falseBranch) =>
         _find(pred) ::: _find(trueBranch) ::: _find(falseBranch)

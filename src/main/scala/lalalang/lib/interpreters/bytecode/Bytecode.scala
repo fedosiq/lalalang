@@ -9,7 +9,7 @@ import lalalang.lib.expr.*
 import lalalang.lib.expr.BuiltinFn.*
 import lalalang.lib.util.FunctorK.syntax.*
 import lalalang.lib.util.given
-import lalalang.lib.util.{FunctorK, Id, Lens, ~>}
+import lalalang.lib.util.{Id, Lens, ~>}
 
 type BytecodeChunks = Vector[Vector[Instr]]
 

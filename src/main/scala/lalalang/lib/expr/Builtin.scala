@@ -4,8 +4,6 @@ import lalalang.lib.Show
 import lalalang.lib.expr.dsl.lit
 import lalalang.lib.util.|>
 
-import scala.util.chaining.*
-
 // TODO: abstract to 2-ary fn?
 enum ArithmeticFn:
   case Add, Sub, Mul, Div

@@ -110,8 +110,8 @@ class ExprSpec extends munit.FunSuite:
       require(times >= 0, "Expected a non-negative number of application times")
 
       times match
-        case 0     => num
-        case other => succN(eval(succ(num)), times - 1)
+        case 0 => num
+        case _ => succN(eval(succ(num)), times - 1)
     }
 
     val length   = 10
