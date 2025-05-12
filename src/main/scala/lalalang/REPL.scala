@@ -12,12 +12,11 @@ import lalalang.lib.expr.Expr
 import lalalang.lib.expr.Expr.given
 import lalalang.lib.expr.model.VarName
 import lalalang.lib.interpreters.TreeInterpreter
-import lalalang.lib.parser.LCParser
+import lalalang.lib.parser.ParserV2
 
 import scala.util.control.NoStackTrace
 
 class Repl[F[_]: MonadThrow: Console](
-    parser: LCParser,
     interpreter: TreeInterpreter[Either[TreeInterpreter.Error, *]],
     constants: Ref[F, Map[VarName, Expr]]
 ):
@@ -52,7 +51,7 @@ class Repl[F[_]: MonadThrow: Console](
     yield cmd
 
   private def parseExpr(rawExpr: String): F[Expr] =
-    parser.parse(rawExpr).toEither.leftMap(ParseError(_)).liftTo[F]
+    ParserV2.parse(rawExpr).toEither.leftMap(ParseError(_)).liftTo[F]
 
   private def save(name: VarName, rawExpr: String): F[Unit] =
     parseExpr(rawExpr)
@@ -104,7 +103,7 @@ object Repl:
   def mk[I[_]: Sync, F[_]: Sync: Console]: I[Repl[F]] =
     Ref
       .in[I, F, Map[VarName, Expr]](prelude)
-      .map(Repl[F](LCParser(), TreeInterpreter[Either[TreeInterpreter.Error, *]](), _))
+      .map(Repl[F](TreeInterpreter[Either[TreeInterpreter.Error, *]](), _))
 
   val bindRgx = "(\\w+) := (.+)".r
   val prompt  = "λ> "
