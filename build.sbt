@@ -18,6 +18,7 @@ lazy val root = project
       "-feature",
       "-deprecation",
       "-unchecked",
+      "-preview",
       // "-rewrite",
       // "-source",
       // "future",
@@ -27,7 +28,7 @@ lazy val root = project
       "-Wunused:all",
       "-Wvalue-discard",
       "-Wnonunit-statement",
-      "-Xfatal-warnings",
+      // "-Xfatal-warnings",
       // "-Yexplicit-nulls",
       "-Wsafe-init",
       "-Xkind-projector"

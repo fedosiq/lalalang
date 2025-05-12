@@ -11,7 +11,7 @@ private type Fn2 = (Expr, Expr) => Expr.Builtin
 def mkArithmetic(fn: ArithmeticFn)(a: Expr, b: Expr): Expr.Builtin =
   Builtin(Arithmetic(fn, a, b))
 
-private def mkComparison(fn: ComparisonFn)(a: Expr, b: Expr): Expr.Builtin =
+def mkComparison(fn: ComparisonFn)(a: Expr, b: Expr): Expr.Builtin =
   Builtin(Comparison(fn, a, b))
 
 val add: Fn2 = mkArithmetic(ArithmeticFn.Add)

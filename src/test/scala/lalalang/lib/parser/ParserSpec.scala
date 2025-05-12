@@ -1,5 +1,4 @@
-package lalalang
-package lib
+package lalalang.lib.parser
 
 import lalalang.examples.church.booleans.andtf
 import lalalang.examples.functions.*

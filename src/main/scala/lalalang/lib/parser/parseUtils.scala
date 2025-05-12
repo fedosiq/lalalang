@@ -1,7 +1,7 @@
 package lalalang.lib.parser
 
 import parsley.Parsley
-import parsley.character.char
+import parsley.character.{char, whitespaces}
 
 object parseUtils:
   def between[T](ch1: Char, ch2: Char)(p: => Parsley[T]): Parsley[T] =
@@ -12,7 +12,7 @@ object parseUtils:
 
   def parens[T]: (=> Parsley[T]) => Parsley[T]   = between[T]('(', ')')
   def brackets[T]: (=> Parsley[T]) => Parsley[T] = between[T]('{', '}')
-  def spaced[T]: (=> Parsley[T]) => Parsley[T]   = surrounded[T](' ')
+  def spaced[T](p: => Parsley[T]): Parsley[T]    = whitespaces *> p <* whitespaces
 
   // ((M N) O) P
   // adapted from haskell's parsec
