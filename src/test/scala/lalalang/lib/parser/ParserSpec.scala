@@ -5,12 +5,12 @@ import lalalang.examples.functions.*
 import lalalang.lib.expr.Expr.*
 import lalalang.lib.expr.dsl.*
 import lalalang.lib.expr.dsl.Conversions.given
-import lalalang.lib.expr.{Expr, dsl}
-import lalalang.lib.parser.LCParser
+import lalalang.lib.expr.{BuiltinFn, ComparisonFn, Expr, dsl}
+import lalalang.lib.parser.ParserV2
 
 class ParserSpec extends munit.FunSuite:
 
-  private val parser = LCParser()
+  private val parser = ParserV2
 
   inline def testParser(input: String, expected: Expr): Unit =
     parser
@@ -40,8 +40,20 @@ class ParserSpec extends munit.FunSuite:
       inputsToExpectations.foreach(testParser)
     }
 
-  shouldFail("Disallow chained compare operations") {
-    "1<2<3"
+  shouldParse("Allow chained compare operations") {
+    "1<2<3" -> Builtin(
+      BuiltinFn.Comparison(
+        ComparisonFn.Lt,
+        Builtin(
+          BuiltinFn.Comparison(
+            ComparisonFn.Lt,
+            Lit(1),
+            Lit(2)
+          )
+        ),
+        Lit(3)
+      )
+    )
   }
 
   shouldFail("Variable must not start with a digit") {
@@ -62,7 +74,7 @@ class ParserSpec extends munit.FunSuite:
     "1+(2*3)" -> add(1, mul(2, 3))
   )
 
-  test("Arithmetics operation priority".fail) {
+  test("Arithmetics operation priority") {
     testParser("1+2*3", add(1, mul(2, 3)))
   }
 
@@ -76,7 +88,7 @@ class ParserSpec extends munit.FunSuite:
   )
 
   shouldParse("Abstraction")(
-    "λf.(λx.f (x x)) λx.f (x x)",
+    "λf.(λx.f (x x)) (λx.f (x x))",
     lazyFixpoint
   )
 
@@ -106,7 +118,7 @@ class ParserSpec extends munit.FunSuite:
   }
 
   test("Treat λ and \\ equally") {
-    val withLambdas = "λf.(λx.f (x x)) λx.f (x x)"
+    val withLambdas = "λf.(λx.f (x x)) (λx.f (x x))"
     val withSlashes = withLambdas.replace('λ', '\\')
 
     testParser(withLambdas, lazyFixpoint)

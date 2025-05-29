@@ -5,7 +5,7 @@ import cats.effect.unsafe.implicits.global
 import lalalang.lib.expr.Expr
 import lalalang.lib.interpreters.TreeInterpreter.Error
 import lalalang.lib.interpreters.{EnvInterpreter, TreeInterpreter}
-import lalalang.lib.parser.LCParser
+import lalalang.lib.parser.ParserV2
 
 @main def parseTest: Unit =
   val examples = List(
@@ -21,7 +21,7 @@ import lalalang.lib.parser.LCParser
   examples
     .foreach(ex =>
       println(s"input: ${ex}")
-      LCParser()
+      ParserV2
         .parse(ex)
         .map(reduceExample)
     )

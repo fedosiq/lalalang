@@ -1,4 +1,4 @@
-val scala3Version = "3.7.1-RC1"
+val scala3Version = "3.7.1-RC2"
 
 Compile / run / fork := true
 
